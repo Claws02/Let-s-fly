@@ -8,13 +8,16 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
   #c { display: block; width: 100%; height: 100%; }
+
   #hud {
     position: fixed; inset: 0; pointer-events: none;
     font-family: 'Courier New', monospace;
   }
+
+  /* ── Left telemetry panel ── */
   .panel {
     position: absolute; top: 16px; left: 16px;
-    background: rgba(0, 8, 20, 0.78);
+    background: rgba(0,8,20,0.78);
     border: 1px solid rgba(0,255,136,0.3);
     border-radius: 6px;
     padding: 10px 16px;
@@ -25,36 +28,138 @@
     backdrop-filter: blur(8px);
   }
   .panel span { color: #fff; font-weight: bold; }
-  #tilt-canvas {
+
+  /* ── Battery bar ── */
+  #batt-wrap {
     position: absolute;
-    bottom: 16px; right: 16px;
+    bottom: 110px; left: 50%; transform: translateX(-50%);
+    text-align: center;
+    color: #00ff88;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px rgba(0,255,136,0.5);
+    min-width: 220px;
+  }
+  #batt-track {
+    width: 220px; height: 7px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 4px;
+    margin: 5px auto 3px;
+    overflow: hidden;
+  }
+  #batt-fill {
+    height: 100%; width: 100%;
+    background: #00ff88;
+    border-radius: 3px;
+    transition: width 0.12s linear, background 0.3s;
+  }
+  #batt-pct { font-size: 10px; color: rgba(255,255,255,0.45); }
+
+  /* ── "BATTERY DEAD" mid-screen warning ── */
+  #batt-dead {
+    display: none;
+    position: absolute; top: 42%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff4400;
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 14px #ff4400;
+    animation: blink 0.75s ease-in-out infinite;
+  }
+
+  /* ── Run-end full-screen overlay ── */
+  #end-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(7px);
+    pointer-events: all;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    text-align: center;
+  }
+  #end-title {
+    font-size: 54px; font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 30px currentColor;
+  }
+  #end-sub   { font-size: 17px; opacity: 0.6; margin-bottom: 36px; line-height: 1.6; }
+  #end-hint  { font-size: 13px; opacity: 0.4; animation: blink 1.4s ease-in-out infinite; }
+
+  /* ── Progress bar to finish (top centre) ── */
+  #progress-wrap {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    text-align: center;
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    letter-spacing: 2px;
+    min-width: 180px;
+  }
+  #prog-track {
+    width: 180px; height: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px;
+    margin: 5px auto 0;
+    overflow: hidden;
+  }
+  #prog-fill {
+    height: 100%; width: 0%;
+    background: rgba(0,255,136,0.5);
+    border-radius: 2px;
+    transition: width 0.2s;
+  }
+
+  /* ── Misc HUD ── */
+  #tilt-canvas {
+    position: absolute; bottom: 16px; right: 16px;
     border-radius: 50%;
     border: 1px solid rgba(0,255,136,0.25);
   }
   #controls-hint {
     position: absolute; bottom: 16px; left: 16px;
-    color: rgba(255,255,255,0.35);
-    font-size: 11px;
-    line-height: 1.9;
+    color: rgba(255,255,255,0.3);
+    font-size: 11px; line-height: 1.9;
   }
   #step-tag {
     position: absolute; top: 16px; right: 16px;
-    color: rgba(255,255,255,0.2);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    color: rgba(255,255,255,0.18);
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
   }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+
 <div id="hud">
+  <!-- Telemetry -->
   <div class="panel">
     ALT:&nbsp;&nbsp; <span id="v-alt">0.00</span> m<br>
     TILT:&nbsp; <span id="v-tilt">0.0</span>°<br>
     SPEED: <span id="v-spd">0.00</span> m/s<br>
-    CARGO: <span id="v-cargo">3 / 3</span>
+    CARGO: <span id="v-cargo">3 / 3</span><br>
+    DIST:&nbsp; <span id="v-dist">0</span> m
   </div>
+
+  <!-- Canyon progress -->
+  <div id="progress-wrap">
+    TO FINISH: <span id="v-remain">500</span> m
+    <div id="prog-track"><div id="prog-fill"></div></div>
+  </div>
+
+  <!-- Battery -->
+  <div id="batt-wrap">
+    ⚡ BATTERY
+    <div id="batt-track"><div id="batt-fill"></div></div>
+    <div id="batt-pct">100%</div>
+  </div>
+
+  <div id="batt-dead">⚠ BATTERY DEAD — GLIDING</div>
+
   <canvas id="tilt-canvas" width="90" height="90"></canvas>
   <div id="controls-hint">
     [SPACE] Thrust Up<br>
@@ -63,7 +168,14 @@
     [Q / E] Yaw Left / Right<br>
     [R]&nbsp;&nbsp;&nbsp; Reset
   </div>
-  <div id="step-tag">Step 1 · Physics Core</div>
+  <div id="step-tag">Step 2 · Procedural Canyon</div>
+</div>
+
+<!-- Run-end overlay (shown when run ends) -->
+<div id="end-overlay">
+  <div id="end-title">---</div>
+  <div id="end-sub"></div>
+  <div id="end-hint">[R] to fly again</div>
 </div>
 
 <script type="importmap">
@@ -79,36 +191,52 @@
 import * as THREE from 'three';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
 
-// ─── TUNABLE CONSTANTS (will become upgradeable stats) ────────────────────
+// ─── FLIGHT CONSTANTS ─────────────────────────────────────────────────────
 const GRAVITY        = -14;
 const DRONE_MASS     = 2.0;
 const CARGO_MASS     = 0.38;
-let   THRUST_POWER   = 38;   // N  — "Motor KV Rating" upgrade
-let   AUTO_STABILIZE = 1.0;  // ×  — "Gyroscope Tuning" upgrade
-const TORQUE_POWER   = 7.5;  // N·m
+let   THRUST_POWER   = 38;     // N  — upgradeable
+let   AUTO_STABILIZE = 1.0;    // ×  — upgradeable
+let   MAX_BATTERY    = 100;    // units — upgradeable
+const BATTERY_DRAIN  = 7;      // units/sec while thrusting
+const TORQUE_POWER   = 7.5;
 const YAW_POWER      = 3.5;
 const LIN_DAMP       = 0.28;
 const ANG_DAMP       = 0.45;
+const CRASH_VEL_THR  = 12;     // m/s impact velocity → violent crash
+const FINISH_Z       = -500;   // world Z of finish line
 
-// Drone geometry (half-extents)
+// Drone geometry half-extents
 const DX = 1.0, DY = 0.11, DZ = 1.0;
-// Lip dimensions — small ridge around deck to prevent instant cargo slide
 const LIP_H = 0.12, LIP_T = 0.052;
-// Cargo box half-extent
-const CR = 0.27;
+const CR = 0.27; // cargo box half-extent
 
-// ─── CANNON PHYSICS WORLD ─────────────────────────────────────────────────
+// ─── GAME STATE ───────────────────────────────────────────────────────────
+let battery       = MAX_BATTERY;
+let gameState     = 'flying'; // flying | battery_dead | crashed | finished | landed_safe
+let runEnded      = false;
+
+// ─── SEEDED PRNG (deterministic canyon each session) ─────────────────────
+function makePRNG(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+// ─── CANNON WORLD ─────────────────────────────────────────────────────────
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, GRAVITY, 0) });
 world.broadphase = new CANNON.SAPBroadphase(world);
 world.allowSleep = true;
 world.solver.iterations = 20;
 
-// ─── CONTACT MATERIALS ────────────────────────────────────────────────────
+// ─── PHYSICS MATERIALS ────────────────────────────────────────────────────
 const matDrone  = new CANNON.Material('drone');
 const matCargo  = new CANNON.Material('cargo');
 const matGround = new CANNON.Material('ground');
+const matWall   = new CANNON.Material('wall');
 
-// Cargo grips the deck well but can still tip with sharp manoeuvres
 world.addContactMaterial(new CANNON.ContactMaterial(matDrone, matCargo, {
   friction: 0.85, restitution: 0.06
 }));
@@ -116,37 +244,312 @@ world.addContactMaterial(new CANNON.ContactMaterial(matGround, matCargo, {
   friction: 0.55, restitution: 0.2
 }));
 world.addContactMaterial(new CANNON.ContactMaterial(matGround, matDrone, {
-  friction: 0.4,  restitution: 0.05
+  friction: 0.4, restitution: 0.05
+}));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall, matDrone, {
+  friction: 0.3, restitution: 0.25
+}));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall, matCargo, {
+  friction: 0.5, restitution: 0.15
 }));
 
-// ─── GROUND ───────────────────────────────────────────────────────────────
+// ─── GROUND BODY ──────────────────────────────────────────────────────────
 const gndBody = new CANNON.Body({ mass: 0, material: matGround });
 gndBody.addShape(new CANNON.Plane());
 gndBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
 world.addBody(gndBody);
 
+// ─── THREE.JS RENDERER & SCENE ────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('c'), antialias: true
+});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05080f);
+scene.fog = new THREE.FogExp2(0x05080f, 0.014);
+
+const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 700);
+function onResize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+onResize();
+addEventListener('resize', onResize);
+
+// ─── LIGHTING ─────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x1a2a44, 3));
+const sun = new THREE.DirectionalLight(0xfff4e0, 3.5);
+sun.position.set(15, 30, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 150 });
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x0022aa, 0x0a1a08, 1.4));
+
+const rotorLights = [0,1,2,3].map(() => {
+  const l = new THREE.PointLight(0x00ffaa, 0.5, 3.5);
+  scene.add(l);
+  return l;
+});
+
+// ─── GROUND MESH ──────────────────────────────────────────────────────────
+const gndMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(600, 600, 60, 60),
+  new THREE.MeshStandardMaterial({ color: 0x0c140c, roughness: 0.95, metalness: 0.04 })
+);
+gndMesh.rotation.x = -Math.PI / 2;
+gndMesh.receiveShadow = true;
+scene.add(gndMesh);
+
+// Grid extends along canyon run
+const grid = new THREE.GridHelper(600, 100, 0x00ff4405, 0x00ff4403);
+grid.position.z = -300;
+scene.add(grid);
+
+// ─── BACKGROUND STARS ─────────────────────────────────────────────────────
+{
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(3600);
+  for (let i = 0; i < pos.length; i += 3) {
+    const r = 300 + Math.random() * 100;
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.random() * Math.PI * 0.48 + 0.06;
+    pos[i]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i+1] = r * Math.cos(phi) + 5;
+    pos[i+2] = r * Math.sin(phi) * Math.sin(theta) - 250;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0xffffff, size: 0.4, sizeAttenuation: true
+  })));
+}
+
+// ─── LAUNCH PAD (decorative) ──────────────────────────────────────────────
+{
+  const pad = new THREE.Mesh(
+    new THREE.CylinderGeometry(3.5, 3.5, 0.1, 24),
+    new THREE.MeshStandardMaterial({ color: 0x1a2030, roughness: 0.4, metalness: 0.7 })
+  );
+  pad.position.set(0, 0.05, 0);
+  pad.receiveShadow = true;
+  scene.add(pad);
+  // Chevron markings
+  for (let a = 0; a < 8; a++) {
+    const mark = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 0.12, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x443300 })
+    );
+    const angle = (a / 8) * Math.PI * 2;
+    mark.position.set(Math.cos(angle) * 2.5, 0.12, Math.sin(angle) * 2.5);
+    mark.rotation.y = -angle;
+    scene.add(mark);
+  }
+}
+
+// ─── PROCEDURAL CANYON GENERATION ─────────────────────────────────────────
+const wallBodies  = [];   // static CANNON bodies
+const wallMeshes  = [];   // corresponding THREE meshes
+
+const ROCK_MATS = [
+  new THREE.MeshStandardMaterial({ color: 0x2c1e10, roughness: 0.94, metalness: 0.02 }),
+  new THREE.MeshStandardMaterial({ color: 0x38251a, roughness: 0.92, metalness: 0.02 }),
+  new THREE.MeshStandardMaterial({ color: 0x201510, roughness: 0.96, metalness: 0.01 }),
+];
+const PILLAR_MAT = new THREE.MeshStandardMaterial({ color: 0x181008, roughness: 0.91, metalness: 0.03 });
+
+function addWallBody(x, y, z, hw, hh, hd) {
+  const b = new CANNON.Body({ mass: 0, material: matWall });
+  b.addShape(new CANNON.Box(new CANNON.Vec3(hw, hh, hd)));
+  b.position.set(x, y, z);
+  world.addBody(b);
+  wallBodies.push(b);
+}
+
+function addWallMesh(x, y, z, w, h, d, mat) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  m.receiveShadow = true;
+  scene.add(m);
+  wallMeshes.push(m);
+}
+
+function generateCanyon() {
+  const rng = makePRNG(4242);
+
+  const SEG_COUNT  = 36;    // 36 × 15 = 540 units (past finish at 500)
+  const SEG_LEN    = 15;    // Z-length per segment
+  const WALL_W     = 8;     // wall thickness (X)
+  const WALL_OVER  = 2;     // overlap per seam to eliminate Z gaps
+  const CANYON_START_Z = -22; // walls start here (give player a takeoff area)
+
+  // Generate canyon centreline path
+  const pathX = [0];
+  for (let i = 1; i < SEG_COUNT; i++) {
+    const prev  = pathX[i - 1];
+    const drift = (rng() - 0.5) * 5;
+    pathX.push(Math.max(-14, Math.min(14, prev + drift)));
+  }
+
+  for (let i = 0; i < SEG_COUNT; i++) {
+    const segCX = pathX[i];
+    const segCZ = CANYON_START_Z - i * SEG_LEN - SEG_LEN / 2;
+    const progress = i / (SEG_COUNT - 1);
+
+    // Canyon half-width (inside edge to centreline) — narrows toward finish
+    const halfW = THREE.MathUtils.lerp(30, 11, progress) + Math.sin(i * 1.83) * 4.5;
+
+    // Wall height varies for visual drama
+    const wallH = 13 + rng() * 11;
+    const wallD = SEG_LEN + WALL_OVER;
+
+    const leftX  = segCX - halfW - WALL_W / 2;
+    const rightX = segCX + halfW + WALL_W / 2;
+    const mat    = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
+
+    // Physics walls (half-extents)
+    addWallBody(leftX,  wallH / 2, segCZ, WALL_W / 2, wallH / 2, wallD / 2);
+    addWallBody(rightX, wallH / 2, segCZ, WALL_W / 2, wallH / 2, wallD / 2);
+
+    // Visual walls
+    addWallMesh(leftX,  wallH / 2, segCZ, WALL_W, wallH, wallD, mat);
+    addWallMesh(rightX, wallH / 2, segCZ, WALL_W, wallH, wallD, mat);
+
+    // Rocky teeth on top of each wall (decorative — no physics)
+    for (let t = 0; t < 4; t++) {
+      const tz  = segCZ + (rng() - 0.5) * (SEG_LEN * 0.82);
+      const th  = 1.5 + rng() * 5;
+      const tw  = 0.9 + rng() * 2;
+      const trx = (rng() - 0.5) * WALL_W * 0.5;
+      const toothMat = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
+      addWallMesh(leftX  + trx, wallH + th / 2, tz, tw, th, tw, toothMat);
+      addWallMesh(rightX + trx, wallH + th / 2, tz, tw, th, tw, toothMat);
+    }
+
+    // Cave overhangs on some segments (increase challenge in back half)
+    if (progress > 0.4 && rng() > 0.65) {
+      const ohD = SEG_LEN * 0.55;
+      const ohH = 2.5 + rng() * 3;
+      const ohZ = segCZ + (rng() - 0.5) * 4;
+      // Overhang projecting inward from left wall
+      if (rng() > 0.5) {
+        const ohW = 2 + rng() * 3;
+        addWallBody(leftX + WALL_W / 2 + ohW / 2, wallH - ohH / 2, ohZ, ohW / 2, ohH / 2, ohD / 2);
+        addWallMesh(leftX + WALL_W / 2 + ohW / 2, wallH - ohH / 2, ohZ, ohW, ohH, ohD, mat);
+      } else {
+        const ohW = 2 + rng() * 3;
+        addWallBody(rightX - WALL_W / 2 - ohW / 2, wallH - ohH / 2, ohZ, ohW / 2, ohH / 2, ohD / 2);
+        addWallMesh(rightX - WALL_W / 2 - ohW / 2, wallH - ohH / 2, ohZ, ohW, ohH, ohD, mat);
+      }
+    }
+  }
+
+  // ── Pillar / rock obstacles inside canyon ─────────────────────────────
+  // Start after segment 4 (Z ≈ -82), every 3-5 segments
+  for (let i = 4; i < SEG_COUNT - 2; i += 3 + Math.floor(rng() * 3)) {
+    const progress  = i / (SEG_COUNT - 1);
+    const segCX     = pathX[i];
+    const segZ      = CANYON_START_Z - i * SEG_LEN;
+    const halfW     = THREE.MathUtils.lerp(30, 11, progress);
+    const numPill   = rng() > 0.55 ? 2 : 1;
+
+    for (let p = 0; p < numPill; p++) {
+      // Keep pillars comfortably inside the walls
+      const px   = segCX + (rng() - 0.5) * halfW * 1.1;
+      const pZ   = segZ  + (rng() - 0.5) * SEG_LEN * 0.6;
+      const ph   = 3 + rng() * 10;
+      const pw   = 1.0 + rng() * 1.4;
+
+      addWallBody(px, ph / 2, pZ, pw / 2, ph / 2, pw / 2);
+      const pm = new THREE.Mesh(
+        new THREE.BoxGeometry(pw, ph, pw), PILLAR_MAT
+      );
+      pm.position.set(px, ph / 2, pZ);
+      pm.receiveShadow = true;
+      scene.add(pm);
+      wallMeshes.push(pm);
+    }
+  }
+
+  // ── Finish line at Z = FINISH_Z ───────────────────────────────────────
+  buildFinishLine();
+}
+
+function buildFinishLine() {
+  const fz = FINISH_Z;
+  const finishGroup = new THREE.Group();
+
+  // Tall archway posts
+  const postMat = new THREE.MeshStandardMaterial({
+    color: 0xffcc00, emissive: 0x885500, emissiveIntensity: 0.6,
+    roughness: 0.3, metalness: 0.7
+  });
+  [-11, 11].forEach(x => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 20, 10), postMat);
+    post.position.set(x, 10, 0);
+    finishGroup.add(post);
+  });
+
+  // Crossbar
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(22.7, 0.6, 0.6), postMat);
+  bar.position.set(0, 20, 0);
+  finishGroup.add(bar);
+
+  // Coloured signal lights along the bar
+  const lightColors = [0xff2200, 0xff8800, 0xffee00, 0x22ff44, 0x00aaff, 0xaa44ff];
+  lightColors.forEach((col, i) => {
+    const bx = -9 + i * 3.6;
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.42, 10, 7),
+      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 2.0 })
+    );
+    ball.position.set(bx, 20.5, 0);
+    finishGroup.add(ball);
+    const pl = new THREE.PointLight(col, 3, 9);
+    pl.position.set(bx, 20.5, 0);
+    finishGroup.add(pl);
+  });
+
+  // Ground-level chevrons approaching the gate
+  for (let d = 0; d < 5; d++) {
+    const chev = new THREE.Mesh(
+      new THREE.BoxGeometry(22, 0.06, 0.5),
+      new THREE.MeshStandardMaterial({
+        color: 0xffcc00, emissive: 0x443300, emissiveIntensity: 0.4
+      })
+    );
+    chev.position.set(0, 0.04, d * 4 + 2);
+    finishGroup.add(chev);
+  }
+
+  // Sweeping beacon lights at base of each post
+  [-11, 11].forEach((x, idx) => {
+    const beacon = new THREE.PointLight(0xffcc00, 2.5, 18);
+    beacon.position.set(x, 1.5, 0);
+    finishGroup.add(beacon);
+  });
+
+  finishGroup.position.set(0, 0, fz);
+  scene.add(finishGroup);
+}
+
+generateCanyon();
+
 // ─── DRONE BODY ───────────────────────────────────────────────────────────
 const droneBody = new CANNON.Body({ mass: DRONE_MASS, material: matDrone });
 droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, DY, DZ)));
 
-// Invisible lip colliders around deck edges — cargo must TIP, not slide
-const lipY = DY + LIP_H; // y-offset of lip centre from drone centre
-droneBody.addShape(
-  new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),
-  new CANNON.Vec3(0, lipY, -(DZ - LIP_T))   // front
-);
-droneBody.addShape(
-  new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),
-  new CANNON.Vec3(0, lipY,  (DZ - LIP_T))   // back
-);
-droneBody.addShape(
-  new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),
-  new CANNON.Vec3(-(DX - LIP_T), lipY, 0)   // left
-);
-droneBody.addShape(
-  new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),
-  new CANNON.Vec3( (DX - LIP_T), lipY, 0)   // right
-);
+// Invisible deck lips — cargo tips rather than slides
+const lipY = DY + LIP_H;
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)), new CANNON.Vec3(0, lipY, -(DZ - LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)), new CANNON.Vec3(0, lipY,  (DZ - LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)), new CANNON.Vec3(-(DX - LIP_T), lipY, 0));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)), new CANNON.Vec3( (DX - LIP_T), lipY, 0));
 
 droneBody.linearDamping  = LIN_DAMP;
 droneBody.angularDamping = ANG_DAMP;
@@ -163,133 +566,60 @@ const cargoBodies  = CARGO_COLORS.map(() => {
   return b;
 });
 
-// ─── THREE.JS RENDERER & SCENE ────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05080f);
-scene.fog = new THREE.FogExp2(0x05080f, 0.016);
-
-const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 600);
-
-function onResize() {
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-}
-onResize();
-addEventListener('resize', onResize);
-
-// ─── LIGHTING ─────────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x1a2a44, 3));
-const sun = new THREE.DirectionalLight(0xfff4e0, 3.5);
-sun.position.set(15, 30, 10);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -35, right: 35, top: 35, bottom: -35, near: 1, far: 120 });
-scene.add(sun);
-scene.add(new THREE.HemisphereLight(0x0022aa, 0x0a1a08, 1.4));
-
-// Rotor point-lights (glow effect, positioned each frame)
-const rotorLights = [0, 1, 2, 3].map(() => {
-  const l = new THREE.PointLight(0x00ffaa, 0.5, 3.5);
-  scene.add(l);
-  return l;
-});
-
-// ─── GROUND MESH ──────────────────────────────────────────────────────────
-const gndMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(400, 400, 80, 80),
-  new THREE.MeshStandardMaterial({ color: 0x0d160d, roughness: 0.95, metalness: 0.05 })
-);
-gndMesh.rotation.x = -Math.PI / 2;
-gndMesh.receiveShadow = true;
-scene.add(gndMesh);
-scene.add(new THREE.GridHelper(400, 80, 0x00ff4406, 0x00ff4403));
-
-// ─── BACKGROUND STARS ─────────────────────────────────────────────────────
-{
-  const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(3000);
-  for (let i = 0; i < pos.length; i += 3) {
-    const r = 250 + Math.random() * 100;
-    const theta = Math.random() * Math.PI * 2;
-    const phi   = Math.random() * Math.PI * 0.5 + 0.1;
-    pos[i]   = r * Math.sin(phi) * Math.cos(theta);
-    pos[i+1] = r * Math.cos(phi) + 5;
-    pos[i+2] = r * Math.sin(phi) * Math.sin(theta);
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.35, sizeAttenuation: true })));
-}
-
 // ─── DRONE MESH ───────────────────────────────────────────────────────────
 const droneGroup = new THREE.Group();
 scene.add(droneGroup);
 
 // Deck plate
-{
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(DX * 2, DY * 2, DZ * 2),
+droneGroup.add(Object.assign(
+  new THREE.Mesh(
+    new THREE.BoxGeometry(DX*2, DY*2, DZ*2),
     new THREE.MeshStandardMaterial({ color: 0x252830, roughness: 0.22, metalness: 0.88 })
-  );
-  m.castShadow = true; m.receiveShadow = true;
-  droneGroup.add(m);
-}
+  ), { castShadow: true, receiveShadow: true }
+));
 
 // Central hub
-{
-  const m = new THREE.Mesh(
+droneGroup.add(Object.assign(
+  new THREE.Mesh(
     new THREE.CylinderGeometry(0.17, 0.21, 0.16, 8),
     new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.28, metalness: 0.92 })
-  );
-  m.castShadow = true;
-  droneGroup.add(m);
-}
+  ), { castShadow: true }
+));
 
-// Arms + motor mounts + rotor discs
 const ARM_DIRS = [
-  new THREE.Vector3( DX * 0.72, 0, -DZ * 0.72),
-  new THREE.Vector3(-DX * 0.72, 0, -DZ * 0.72),
-  new THREE.Vector3( DX * 0.72, 0,  DZ * 0.72),
-  new THREE.Vector3(-DX * 0.72, 0,  DZ * 0.72),
+  new THREE.Vector3( DX*0.72, 0, -DZ*0.72),
+  new THREE.Vector3(-DX*0.72, 0, -DZ*0.72),
+  new THREE.Vector3( DX*0.72, 0,  DZ*0.72),
+  new THREE.Vector3(-DX*0.72, 0,  DZ*0.72),
 ];
 const rotorDiscs = [];
-const armMat   = new THREE.MeshStandardMaterial({ color: 0x1c1e27, roughness: 0.32, metalness: 0.82 });
-const motorMat = new THREE.MeshStandardMaterial({ color: 0x2e3040, roughness: 0.2,  metalness: 0.9  });
-const rotorMat = new THREE.MeshStandardMaterial({
+const armMat    = new THREE.MeshStandardMaterial({ color: 0x1c1e27, roughness: 0.32, metalness: 0.82 });
+const motorMat  = new THREE.MeshStandardMaterial({ color: 0x2e3040, roughness: 0.2,  metalness: 0.9 });
+const rotorMat  = new THREE.MeshStandardMaterial({
   color: 0x00ffaa, emissive: 0x00aa66, emissiveIntensity: 0.9,
   transparent: true, opacity: 0.55, side: THREE.DoubleSide
 });
 
-ARM_DIRS.forEach((dir, i) => {
-  // Arm strut
+ARM_DIRS.forEach(dir => {
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.62), armMat);
   arm.position.copy(dir).multiplyScalar(0.5);
   arm.lookAt(dir.clone().multiplyScalar(3));
   arm.castShadow = true;
   droneGroup.add(arm);
 
-  // Motor mount cylinder
   const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.13, 8), motorMat);
   motor.position.set(dir.x, 0.08, dir.z);
   droneGroup.add(motor);
 
-  // Rotor disc
   const rotor = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.02, 16), rotorMat);
   rotor.position.set(dir.x, 0.13, dir.z);
   droneGroup.add(rotor);
   rotorDiscs.push(rotor);
 });
 
-// Landing legs (4 small struts)
+// Landing legs
 const legMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.5, metalness: 0.7 });
-[[-0.7, 0, -0.7], [0.7, 0, -0.7], [-0.7, 0, 0.7], [0.7, 0, 0.7]].forEach(([x, , z]) => {
+[[-0.7,0,-0.7],[0.7,0,-0.7],[-0.7,0,0.7],[0.7,0,0.7]].forEach(([x,,z]) => {
   const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.28, 5), legMat);
   leg.position.set(x, -DY - 0.14, z);
   droneGroup.add(leg);
@@ -298,7 +628,7 @@ const legMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.5,
 // ─── CARGO MESHES ─────────────────────────────────────────────────────────
 const cargoMeshes = CARGO_COLORS.map(color => {
   const m = new THREE.Mesh(
-    new THREE.BoxGeometry(CR * 2, CR * 2, CR * 2),
+    new THREE.BoxGeometry(CR*2, CR*2, CR*2),
     new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.15 })
   );
   m.castShadow = true;
@@ -309,16 +639,31 @@ const cargoMeshes = CARGO_COLORS.map(color => {
 // ─── INPUT ────────────────────────────────────────────────────────────────
 const K = {};
 const PREVENT = new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
-addEventListener('keydown', e => {
-  K[e.code] = true;
-  if (PREVENT.has(e.code)) e.preventDefault();
+addEventListener('keydown', e => { K[e.code] = true; if (PREVENT.has(e.code)) e.preventDefault(); });
+addEventListener('keyup',   e => { K[e.code] = false; });
+
+// ─── CRASH DETECTION VIA COLLISION EVENT ──────────────────────────────────
+droneBody.addEventListener('collide', event => {
+  if (runEnded) return;
+  const v = event.contact.getImpactVelocityAlongNormal();
+  if (Math.abs(v) > CRASH_VEL_THR) {
+    endRun('crashed');
+  }
 });
-addEventListener('keyup', e => { K[e.code] = false; });
 
 // ─── RESET ────────────────────────────────────────────────────────────────
 const START_Y = 2.5;
+const camSmooth = new THREE.Vector3(0, 7, 14);
+const camLookAt = new THREE.Vector3(0, START_Y, 0);
 
 function resetDrone() {
+  battery       = MAX_BATTERY;
+  gameState     = 'flying';
+  runEnded      = false;
+
+  document.getElementById('end-overlay').style.display  = 'none';
+  document.getElementById('batt-dead').style.display    = 'none';
+
   droneBody.position.set(0, START_Y, 0);
   droneBody.velocity.set(0, 0, 0);
   droneBody.angularVelocity.set(0, 0, 0);
@@ -329,7 +674,7 @@ function resetDrone() {
 
   const deckTop = START_Y + DY;
   cargoBodies.forEach((b, i) => {
-    b.position.set(0, deckTop + CR + i * (CR * 2 + 0.025), 0);
+    b.position.set(0, deckTop + CR + i * (CR*2 + 0.025), 0);
     b.velocity.set(0, 0, 0);
     b.angularVelocity.set(0, 0, 0);
     b.quaternion.set(0, 0, 0, 1);
@@ -338,15 +683,66 @@ function resetDrone() {
     b.wakeUp();
   });
 
-  // Snap camera
   camSmooth.set(0, 7, 14);
   camLookAt.set(0, START_Y, 0);
 }
 
 addEventListener('keydown', e => { if (e.code === 'KeyR') resetDrone(); });
 
+// ─── END-RUN HANDLER ──────────────────────────────────────────────────────
+function countCargo() {
+  const pos = droneBody.position;
+  let n = 0;
+  cargoBodies.forEach(b => {
+    const dy = b.position.y - pos.y;
+    const dx = Math.abs(b.position.x - pos.x);
+    const dz = Math.abs(b.position.z - pos.z);
+    if (dy > -0.5 && dy < 2.5 && dx < DX + CR + 0.2 && dz < DZ + CR + 0.2) n++;
+  });
+  return n;
+}
+
+function endRun(reason) {
+  if (runEnded) return;
+  runEnded  = true;
+  gameState = reason;
+  document.getElementById('batt-dead').style.display = 'none';
+
+  const distM   = Math.max(0, -droneBody.position.z).toFixed(0);
+  const cargo   = countCargo();
+  const overlay = document.getElementById('end-overlay');
+  const title   = document.getElementById('end-title');
+  const sub     = document.getElementById('end-sub');
+
+  const colorMap = {
+    finished:     '#00ff88',
+    crashed:      '#ff3300',
+    landed_safe:  '#ffaa00',
+  };
+
+  const messages = {
+    finished: {
+      t: 'FINISH LINE!',
+      s: `Distance: ${distM} m  ·  Cargo: ${cargo} / 3\nRun complete — check back in Step 3 for payout!`
+    },
+    crashed: {
+      t: 'WRECKAGE',
+      s: `Impact velocity too high.\nDistance: ${distM} m  ·  Cargo lost.`
+    },
+    landed_safe: {
+      t: 'BATTERY DEAD',
+      s: `Controlled landing.\nDistance: ${distM} m  ·  Cargo: ${cargo} / 3\nSalvage payout in Step 3!`
+    },
+  };
+
+  const msg = messages[reason] || { t: 'RUN ENDED', s: `Distance: ${distM} m` };
+  title.textContent = msg.t;
+  title.style.color = colorMap[reason] || '#fff';
+  sub.textContent   = msg.s;
+  overlay.style.display = 'flex';
+}
+
 // ─── FLIGHT CONTROLLER ────────────────────────────────────────────────────
-// Pre-allocate Cannon vectors to avoid per-frame GC pressure
 const _upLocal   = new CANNON.Vec3(0, 1, 0);
 const _worldUp   = new CANNON.Vec3();
 const _pidCorr   = new CANNON.Vec3();
@@ -354,49 +750,64 @@ const _thrustVec = new CANNON.Vec3();
 const _localTorq = new CANNON.Vec3();
 
 function applyFlightForces() {
-  const thrusting = K['Space'];
-  const pitchIn   = (+(K['KeyW'] || K['ArrowUp']))   - (+(K['KeyS'] || K['ArrowDown']));
-  const rollIn    = (+(K['KeyD'] || K['ArrowRight'])) - (+(K['KeyA'] || K['ArrowLeft']));
-  const yawIn     = (+K['KeyQ'])                      - (+K['KeyE']);
+  if (runEnded) return;
 
-  // Thrust: push UP relative to drone's current orientation
+  const battAlive  = battery > 0;
+  const thrusting  = K['Space'] && battAlive;
+  const pitchIn    = (+(K['KeyW'] || K['ArrowUp']))    - (+(K['KeyS'] || K['ArrowDown']));
+  const rollIn     = (+(K['KeyD'] || K['ArrowRight'])) - (+(K['KeyA'] || K['ArrowLeft']));
+  const yawIn      = (+K['KeyQ']) - (+K['KeyE']);
+
+  // Thrust — drain battery proportionally
   if (thrusting) {
     droneBody.quaternion.vmult(_upLocal, _thrustVec);
     _thrustVec.scale(THRUST_POWER, _thrustVec);
     droneBody.applyForce(_thrustVec, droneBody.position);
+    battery = Math.max(0, battery - BATTERY_DRAIN * FIXED_DT);
+    if (battery <= 0) {
+      gameState = 'battery_dead';
+      document.getElementById('batt-dead').style.display = 'block';
+    }
   }
 
-  // Pitch / Roll / Yaw as LOCAL torques
-  // +X rotation  → nose pitches forward (−Z)
-  // +Z rotation  → drone rolls right (+X side up)
-  // +Y rotation  → yaw left (CCW from above)
-  _localTorq.set(
-    pitchIn * TORQUE_POWER,
-    yawIn   * YAW_POWER,
-    rollIn  * TORQUE_POWER
-  );
+  // Pitch / Roll / Yaw as local torques (body-relative)
+  _localTorq.set(pitchIn * TORQUE_POWER, yawIn * YAW_POWER, rollIn * TORQUE_POWER);
   if (pitchIn !== 0 || rollIn !== 0 || yawIn !== 0) {
     droneBody.applyLocalTorque(_localTorq);
   }
 
-  // ── PID Auto-Stabiliser ─────────────────────────────────────────────
-  // Compute drone's world-up vector, cross with target (0,1,0) to get
-  // the corrective torque axis + magnitude.
+  // PID Auto-Stabiliser (always active — gyroscope is passive)
   droneBody.quaternion.vmult(_upLocal, _worldUp);
   _worldUp.cross(_upLocal, _pidCorr);  // worldUp × (0,1,0) = corrective axis
 
   const pidP = AUTO_STABILIZE * 22;
   const pidD = AUTO_STABILIZE * 7;
+  if (pitchIn === 0) droneBody.torque.x += _pidCorr.x * pidP - droneBody.angularVelocity.x * pidD;
+  if (rollIn  === 0) droneBody.torque.z += _pidCorr.z * pidP - droneBody.angularVelocity.z * pidD;
+}
 
-  if (pitchIn === 0) {
-    droneBody.torque.x += _pidCorr.x * pidP - droneBody.angularVelocity.x * pidD;
+// ─── GAME-STATE CHECKS ────────────────────────────────────────────────────
+function checkGameState() {
+  if (runEnded) return;
+
+  // Finish line trigger
+  if (droneBody.position.z <= FINISH_Z) {
+    endRun('finished');
+    return;
   }
-  if (rollIn === 0) {
-    droneBody.torque.z += _pidCorr.z * pidP - droneBody.angularVelocity.z * pidD;
+
+  // Battery dead + landed gently (fall-back for cases the collide event doesn't catch)
+  if (gameState === 'battery_dead') {
+    const spd = droneBody.velocity.length();
+    if (droneBody.position.y <= DY + 0.3 && spd < 4.0) {
+      endRun('landed_safe');
+    }
   }
 }
 
 // ─── SYNC THREE ↔ CANNON ──────────────────────────────────────────────────
+const _rotorWP = ARM_DIRS.map(() => new THREE.Vector3());
+
 function syncMeshes() {
   droneGroup.position.copy(droneBody.position);
   droneGroup.quaternion.copy(droneBody.quaternion);
@@ -406,146 +817,129 @@ function syncMeshes() {
     m.quaternion.copy(cargoBodies[i].quaternion);
   });
 
-  // Spin rotors; speed = thrust state
-  const spinSpeed = K['Space'] ? 0.38 : 0.07;
-  rotorDiscs.forEach((r, i) => { r.rotation.y += (i % 2 ? 1 : -1) * spinSpeed; });
+  const spin = K['Space'] && battery > 0 ? 0.38 : 0.07;
+  rotorDiscs.forEach((r, i) => { r.rotation.y += (i % 2 ? 1 : -1) * spin; });
 
-  // Move rotor glow lights to world positions
   ARM_DIRS.forEach((dir, i) => {
-    const wp = dir.clone().setY(0.15)
+    _rotorWP[i].copy(dir).setY(0.15)
       .applyQuaternion(droneGroup.quaternion)
       .add(droneGroup.position);
-    rotorLights[i].position.copy(wp);
-    rotorLights[i].intensity = K['Space'] ? 2.2 : 0.4;
+    rotorLights[i].position.copy(_rotorWP[i]);
+    rotorLights[i].intensity = (K['Space'] && battery > 0) ? 2.2 : 0.4;
   });
 }
 
 // ─── CAMERA ───────────────────────────────────────────────────────────────
-const camSmooth = new THREE.Vector3(0, 7, 14);
-const camLookAt = new THREE.Vector3(0, START_Y, 0);
-let   camYaw    = 0;
+let camYaw = 0;
 
 function updateCamera() {
-  // Extract drone's yaw (Y-axis rotation) from its quaternion
-  const q = droneBody.quaternion;
+  const q  = droneBody.quaternion;
   const sY = 2 * (q.w * q.y + q.z * q.x);
   const cY = 1 - 2 * (q.x * q.x + q.y * q.y);
-  const droneYaw = Math.atan2(sY, cY);
-  camYaw += (droneYaw - camYaw) * 0.04;
+  camYaw  += (Math.atan2(sY, cY) - camYaw) * 0.04;
 
   const offset = new THREE.Vector3(0, 4.5, 9)
     .applyEuler(new THREE.Euler(0, camYaw, 0));
   const dPos = new THREE.Vector3(
     droneBody.position.x, droneBody.position.y, droneBody.position.z
   );
-
   camSmooth.lerp(dPos.clone().add(offset), 0.06);
-  camLookAt.lerp(dPos.clone().setY(dPos.y + 0.3), 0.1);
+  camLookAt.lerp(dPos.clone().setY(dPos.y + 0.3), 0.10);
   camera.position.copy(camSmooth);
   camera.lookAt(camLookAt);
 }
 
-// ─── HUD & TILT INDICATOR ─────────────────────────────────────────────────
-const elAlt   = document.getElementById('v-alt');
-const elTilt  = document.getElementById('v-tilt');
-const elSpd   = document.getElementById('v-spd');
-const elCargo = document.getElementById('v-cargo');
-const tiltCanvas = document.getElementById('tilt-canvas');
-const tiltCtx    = tiltCanvas.getContext('2d');
+// ─── HUD ──────────────────────────────────────────────────────────────────
+const elAlt    = document.getElementById('v-alt');
+const elTilt   = document.getElementById('v-tilt');
+const elSpd    = document.getElementById('v-spd');
+const elCargo  = document.getElementById('v-cargo');
+const elDist   = document.getElementById('v-dist');
+const elRemain = document.getElementById('v-remain');
+const battFill = document.getElementById('batt-fill');
+const battPct  = document.getElementById('batt-pct');
+const progFill = document.getElementById('prog-fill');
+const tiltCtx  = document.getElementById('tilt-canvas').getContext('2d');
 
 function updateHUD() {
-  const pos  = droneBody.position;
-  const vel  = droneBody.velocity;
-  const alt  = Math.max(0, pos.y - DY).toFixed(2);
-  const spd  = Math.sqrt(vel.x*vel.x + vel.y*vel.y + vel.z*vel.z).toFixed(2);
+  const pos = droneBody.position;
+  const vel = droneBody.velocity;
+
+  elAlt.textContent  = Math.max(0, pos.y - DY).toFixed(2);
+  elSpd.textContent  = Math.sqrt(vel.x*vel.x + vel.y*vel.y + vel.z*vel.z).toFixed(2);
 
   droneBody.quaternion.vmult(_upLocal, _worldUp);
   const tiltRad = Math.acos(Math.max(-1, Math.min(1, _worldUp.y)));
-  const tiltDeg = (tiltRad * 180 / Math.PI).toFixed(1);
+  elTilt.textContent = (tiltRad * 180 / Math.PI).toFixed(1);
 
-  let onBoard = 0;
-  cargoBodies.forEach(b => {
-    const dy = b.position.y - pos.y;
-    const dx = Math.abs(b.position.x - pos.x);
-    const dz = Math.abs(b.position.z - pos.z);
-    if (dy > -0.5 && dy < 2.5 && dx < DX + CR + 0.2 && dz < DZ + CR + 0.2) onBoard++;
-  });
-
-  elAlt.textContent   = alt;
-  elTilt.textContent  = tiltDeg;
-  elSpd.textContent   = spd;
+  const onBoard = countCargo();
   elCargo.textContent = `${onBoard} / 3`;
 
-  // Artificial horizon display
-  const roll  =  _worldUp.x;  // ≈ sin(roll angle)
-  const pitch = -_worldUp.z;  // ≈ sin(pitch forward)
-  drawHorizon(roll, pitch);
+  const dist    = Math.max(0, -pos.z);
+  const remain  = Math.max(0, 500 + pos.z);
+  elDist.textContent   = dist.toFixed(0);
+  elRemain.textContent = remain.toFixed(0);
+  progFill.style.width = Math.min(100, dist / 5) + '%';
+
+  // Battery bar
+  const pct = (battery / MAX_BATTERY) * 100;
+  battFill.style.width      = pct + '%';
+  battFill.style.background = pct > 50 ? '#00ff88' : pct > 20 ? '#ffaa00' : '#ff3300';
+  battPct.textContent       = pct.toFixed(0) + '%';
+
+  // Artificial horizon
+  drawHorizon(_worldUp.x, -_worldUp.z);
 }
 
 function drawHorizon(roll, pitch) {
   tiltCtx.clearRect(0, 0, 90, 90);
-
   tiltCtx.save();
-  tiltCtx.beginPath();
-  tiltCtx.arc(45, 45, 43, 0, Math.PI * 2);
-  tiltCtx.clip();
+  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.clip();
 
   tiltCtx.save();
   tiltCtx.translate(45, 45);
   tiltCtx.rotate(-Math.asin(Math.max(-1, Math.min(1, roll))));
   const pOff = pitch * 48;
-
-  // Sky
   tiltCtx.fillStyle = '#001844';
   tiltCtx.fillRect(-45, -45, 90, 45 + pOff);
-  // Ground
   tiltCtx.fillStyle = '#0d2208';
   tiltCtx.fillRect(-45, pOff, 90, 45 - pOff);
-  // Horizon line
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.55)';
+  tiltCtx.strokeStyle = 'rgba(255,255,255,0.5)';
   tiltCtx.lineWidth = 1.5;
-  tiltCtx.beginPath();
-  tiltCtx.moveTo(-43, pOff); tiltCtx.lineTo(43, pOff);
-  tiltCtx.stroke();
+  tiltCtx.beginPath(); tiltCtx.moveTo(-43, pOff); tiltCtx.lineTo(43, pOff); tiltCtx.stroke();
   tiltCtx.restore();
   tiltCtx.restore();
 
-  // Border circle
-  tiltCtx.strokeStyle = 'rgba(0,255,136,0.3)';
+  tiltCtx.strokeStyle = 'rgba(0,255,136,0.28)';
+  tiltCtx.lineWidth = 1;
+  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.stroke();
+
+  tiltCtx.strokeStyle = 'rgba(255,255,255,0.55)';
   tiltCtx.lineWidth = 1;
   tiltCtx.beginPath();
-  tiltCtx.arc(45, 45, 43, 0, Math.PI * 2);
+  tiltCtx.moveTo(34,45); tiltCtx.lineTo(56,45);
+  tiltCtx.moveTo(45,34); tiltCtx.lineTo(45,56);
   tiltCtx.stroke();
 
-  // Crosshair
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.6)';
-  tiltCtx.lineWidth = 1;
-  tiltCtx.beginPath();
-  tiltCtx.moveTo(34, 45); tiltCtx.lineTo(56, 45);
-  tiltCtx.moveTo(45, 34); tiltCtx.lineTo(45, 56);
-  tiltCtx.stroke();
-
-  // Centre dot
   tiltCtx.fillStyle = '#fff';
-  tiltCtx.beginPath();
-  tiltCtx.arc(45, 45, 2, 0, Math.PI * 2);
-  tiltCtx.fill();
+  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 2, 0, Math.PI*2); tiltCtx.fill();
 }
 
-// ─── FIXED-TIMESTEP PHYSICS LOOP ──────────────────────────────────────────
+// ─── MAIN LOOP ────────────────────────────────────────────────────────────
 const FIXED_DT  = 1 / 60;
 let   accumulator = 0;
 let   lastTime    = performance.now();
 
 function loop(now) {
   requestAnimationFrame(loop);
-  let dt = Math.min((now - lastTime) / 1000, 0.05);
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   accumulator += dt;
 
   while (accumulator >= FIXED_DT) {
     applyFlightForces();
     world.step(FIXED_DT);
+    checkGameState();
     accumulator -= FIXED_DT;
   }
 

@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Gyro Drop — The Wobbly Hauler</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; }
   #c { display: block; width: 100%; height: 100%; }
 
   #hud {
@@ -14,31 +14,25 @@
     font-family: 'Courier New', monospace;
   }
 
-  /* ── Left telemetry panel ── */
+  /* ── Telemetry panel ── */
   .panel {
     position: absolute; top: 16px; left: 16px;
     background: rgba(0,8,20,0.78);
     border: 1px solid rgba(0,255,136,0.3);
-    border-radius: 6px;
-    padding: 10px 16px;
-    color: #00ff88;
-    font-size: 13px;
-    line-height: 2.1;
+    border-radius: 6px; padding: 10px 16px;
+    color: #00ff88; font-size: 13px; line-height: 2.1;
     text-shadow: 0 0 7px rgba(0,255,136,0.7);
     backdrop-filter: blur(8px);
   }
   .panel span { color: #fff; font-weight: bold; }
 
-  /* ── Coin bank display ── */
+  /* ── Coin bank ── */
   #coins-hud {
     position: absolute; top: 16px; right: 16px;
     background: rgba(0,8,20,0.78);
     border: 1px solid rgba(255,200,0,0.35);
-    border-radius: 6px;
-    padding: 8px 14px;
-    color: #ffcc00;
-    font-size: 13px;
-    letter-spacing: 1px;
+    border-radius: 6px; padding: 8px 14px;
+    color: #ffcc00; font-size: 13px; letter-spacing: 1px;
     text-shadow: 0 0 7px rgba(255,200,0,0.6);
     backdrop-filter: blur(8px);
   }
@@ -46,281 +40,209 @@
 
   /* ── Battery bar ── */
   #batt-wrap {
-    position: absolute;
-    bottom: 110px; left: 50%; transform: translateX(-50%);
-    text-align: center;
-    color: #00ff88;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 5px rgba(0,255,136,0.5);
-    min-width: 220px;
+    position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+    text-align: center; color: #00ff88; font-size: 10px; letter-spacing: 2px;
+    text-shadow: 0 0 5px rgba(0,255,136,0.5); min-width: 220px;
   }
   #batt-track {
-    width: 220px; height: 7px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 4px;
-    margin: 5px auto 3px;
-    overflow: hidden;
+    width: 220px; height: 7px; background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 4px;
+    margin: 5px auto 3px; overflow: hidden;
   }
-  #batt-fill {
-    height: 100%; width: 100%;
-    background: #00ff88;
-    border-radius: 3px;
-    transition: width 0.12s linear, background 0.3s;
-  }
-  #batt-pct { font-size: 10px; color: rgba(255,255,255,0.45); }
+  #batt-fill { height: 100%; width: 100%; background: #00ff88; border-radius: 3px; transition: width 0.12s linear, background 0.3s; }
+  #batt-pct  { font-size: 10px; color: rgba(255,255,255,0.45); }
 
-  /* ── "BATTERY DEAD" mid-screen warning ── */
+  /* ── Battery dead ── */
   #batt-dead {
-    display: none;
-    position: absolute; top: 42%; left: 50%;
+    display: none; position: absolute; top: 42%; left: 50%;
     transform: translate(-50%, -50%);
-    color: #ff4400;
-    font-size: 20px;
-    letter-spacing: 4px;
-    text-shadow: 0 0 14px #ff4400;
-    animation: blink 0.75s ease-in-out infinite;
+    color: #ff4400; font-size: 20px; letter-spacing: 4px;
+    text-shadow: 0 0 14px #ff4400; animation: blink 0.75s ease-in-out infinite;
   }
 
-  /* ── Run-end full-screen overlay ── */
+  /* ── End overlay ── */
   #end-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    align-items: center; justify-content: center;
-    flex-direction: column;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(10px);
-    pointer-events: all;
-    font-family: 'Courier New', monospace;
-    color: #fff;
-    text-align: center;
+    display: none; position: fixed; inset: 0;
+    align-items: center; justify-content: center; flex-direction: column;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
+    pointer-events: all; font-family: 'Courier New', monospace;
+    color: #fff; text-align: center;
   }
-  #end-title {
-    font-size: 52px; font-weight: bold;
-    margin-bottom: 4px;
-    text-shadow: 0 0 30px currentColor;
-  }
-  #end-scenario {
-    font-size: 13px; letter-spacing: 3px;
-    opacity: 0.5; margin-bottom: 28px;
-    text-transform: uppercase;
-  }
+  #end-title { font-size: 52px; font-weight: bold; margin-bottom: 4px; text-shadow: 0 0 30px currentColor; }
+  #end-scenario { font-size: 13px; letter-spacing: 3px; opacity: 0.5; margin-bottom: 28px; text-transform: uppercase; }
 
-  /* Payout breakdown card */
   #payout-card {
-    background: rgba(0,8,20,0.85);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    padding: 22px 36px;
-    min-width: 340px;
-    margin-bottom: 16px;
+    background: rgba(0,8,20,0.85); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 22px 36px; min-width: 340px; margin-bottom: 16px;
   }
   .pay-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: rgba(255,255,255,0.55);
-    padding: 5px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: rgba(255,255,255,0.55); padding: 5px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
   .pay-row:last-child { border-bottom: none; }
-  .pay-row .pay-label { text-align: left; }
   .pay-row .pay-val   { text-align: right; font-weight: bold; color: #fff; }
   .pay-row.multiplier .pay-val { color: #00aaff; }
-  .pay-row.total-row {
-    margin-top: 10px; padding-top: 12px;
-    border-top: 1px solid rgba(255,255,255,0.2);
-    border-bottom: none;
-    font-size: 17px; color: #fff;
-  }
+  .pay-row.total-row  { margin-top: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); border-bottom: none; font-size: 17px; color: #fff; }
   .pay-row.total-row .pay-val { font-size: 22px; color: #ffcc00; text-shadow: 0 0 12px #ffcc00; }
 
-  #bank-line {
-    font-size: 13px; color: rgba(255,200,0,0.6);
-    letter-spacing: 1px; margin-bottom: 20px;
-  }
+  #bank-line { font-size: 13px; color: rgba(255,200,0,0.6); letter-spacing: 1px; margin-bottom: 20px; }
   #bank-line span { color: #ffcc00; font-weight: bold; }
 
-  /* End-screen action buttons */
-  .end-btns { display: flex; gap: 12px; margin-bottom: 0; }
-  .end-btn {
-    padding: 11px 28px;
-    border: none; border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px; font-weight: bold;
-    letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
-  }
+  .end-btns { display: flex; gap: 12px; }
+  .end-btn { padding: 11px 28px; border: none; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
   .end-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-  .end-btn:active { transform: translateY(0); }
   .btn-fly    { background: #00ff88; color: #000; }
   .btn-garage { background: #ffcc00; color: #000; }
-
-  #end-hint  { font-size: 11px; opacity: 0.3; margin-top: 14px; animation: blink 1.4s ease-in-out infinite; }
+  #end-hint   { font-size: 11px; opacity: 0.3; margin-top: 14px; animation: blink 1.4s ease-in-out infinite; }
 
   /* ── Progress bar ── */
   #progress-wrap {
     position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
-    text-align: center; color: rgba(255,255,255,0.35);
-    font-size: 10px; letter-spacing: 2px; min-width: 180px;
+    text-align: center; color: rgba(255,255,255,0.35); font-size: 10px; letter-spacing: 2px; min-width: 180px;
   }
-  #prog-track {
-    width: 180px; height: 4px;
-    background: rgba(255,255,255,0.07);
-    border-radius: 2px; margin: 5px auto 0; overflow: hidden;
-  }
-  #prog-fill {
-    height: 100%; width: 0%;
-    background: rgba(0,255,136,0.5);
-    border-radius: 2px; transition: width 0.2s;
+  #prog-track { width: 180px; height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; margin: 5px auto 0; overflow: hidden; }
+  #prog-fill  { height: 100%; width: 0%; background: rgba(0,255,136,0.5); border-radius: 2px; transition: width 0.2s; }
+
+  /* ── Tilt/Horizon ── */
+  #tilt-canvas { position: absolute; bottom: 16px; right: 16px; border-radius: 50%; border: 1px solid rgba(0,255,136,0.25); }
+
+  /* ── Controls hint (hidden on touch devices) ── */
+  #controls-hint { position: absolute; bottom: 16px; left: 16px; color: rgba(255,255,255,0.3); font-size: 11px; line-height: 1.9; }
+  #step-tag { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.13); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+  @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.15} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE TOUCH CONTROLS
+  ═══════════════════════════════════════════════════════════════ */
+  #touch-controls {
+    display: none; /* shown via JS on touch device */
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 10;
   }
 
-  /* ── Misc HUD ── */
-  #tilt-canvas {
-    position: absolute; bottom: 16px; right: 16px;
-    border-radius: 50%;
-    border: 1px solid rgba(0,255,136,0.25);
-  }
-  #controls-hint {
-    position: absolute; bottom: 16px; left: 16px;
-    color: rgba(255,255,255,0.3);
-    font-size: 11px; line-height: 1.9;
-  }
-  #step-tag {
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-    color: rgba(255,255,255,0.13);
-    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-  }
-
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════
-     GARAGE OVERLAY
-  ═══════════════════════════════════════════════════════════════════════ */
-  #garage-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    align-items: flex-start; justify-content: center;
-    background: rgba(0,0,0,0.88);
-    backdrop-filter: blur(14px);
+  /* Virtual joystick (bottom-left) */
+  #joystick-zone {
+    position: absolute; left: 20px; bottom: 20px;
+    width: 140px; height: 140px;
     pointer-events: all;
+  }
+  #joystick-base {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(0,255,136,0.25);
+  }
+  #joystick-knob {
+    position: absolute;
+    width: 52px; height: 52px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(0,255,136,0.35);
+    border: 2px solid rgba(0,255,136,0.7);
+    box-shadow: 0 0 14px rgba(0,255,136,0.4);
+    transition: transform 0.05s;
+    pointer-events: none;
+  }
+
+  /* Thrust button (bottom-right) */
+  #thrust-btn {
+    position: absolute; right: 130px; bottom: 20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(0,255,136,0.15);
+    border: 2px solid rgba(0,255,136,0.4);
+    color: #00ff88; font-size: 11px; font-weight: bold;
+    letter-spacing: 1px; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; pointer-events: all;
+    user-select: none; -webkit-user-select: none;
+    transition: background 0.1s, box-shadow 0.1s;
     font-family: 'Courier New', monospace;
-    color: #fff;
-    overflow-y: auto;
-    padding: 40px 20px 60px;
   }
-  #garage-inner {
-    width: 100%; max-width: 640px;
-    animation: slideUp 0.25s ease-out;
+  #thrust-btn.active {
+    background: rgba(0,255,136,0.35);
+    box-shadow: 0 0 28px rgba(0,255,136,0.5);
   }
-  #garage-header {
-    text-align: center; margin-bottom: 32px;
+  #thrust-btn-icon { font-size: 26px; line-height: 1; }
+
+  /* Yaw buttons (bottom-centre) */
+  #yaw-btns {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 14px; pointer-events: all;
   }
-  #garage-title {
-    font-size: 38px; font-weight: bold; letter-spacing: 4px;
-    color: #ffcc00; text-shadow: 0 0 24px rgba(255,200,0,0.6);
-    margin-bottom: 6px;
+  .yaw-btn {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6); font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: all; user-select: none; -webkit-user-select: none;
+    transition: background 0.1s;
+    font-family: 'Courier New', monospace;
   }
-  #garage-subtitle {
-    font-size: 12px; letter-spacing: 2px; opacity: 0.4;
-    text-transform: uppercase;
+  .yaw-btn.active { background: rgba(255,255,255,0.18); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     GARAGE OVERLAY
+  ═══════════════════════════════════════════════════════════════ */
+  #garage-overlay {
+    display: none; position: fixed; inset: 0;
+    align-items: flex-start; justify-content: center;
+    background: rgba(0,0,0,0.88); backdrop-filter: blur(14px);
+    pointer-events: all; font-family: 'Courier New', monospace;
+    color: #fff; overflow-y: auto; padding: 40px 20px 60px;
   }
-  #garage-bank {
-    font-size: 18px; color: #ffcc00; margin-top: 14px;
-    text-shadow: 0 0 10px rgba(255,200,0,0.4);
-  }
+  #garage-inner { width: 100%; max-width: 640px; animation: slideUp 0.25s ease-out; }
+  #garage-header { text-align: center; margin-bottom: 32px; }
+  #garage-title  { font-size: 38px; font-weight: bold; letter-spacing: 4px; color: #ffcc00; text-shadow: 0 0 24px rgba(255,200,0,0.6); margin-bottom: 6px; }
+  #garage-subtitle { font-size: 12px; letter-spacing: 2px; opacity: 0.4; text-transform: uppercase; }
+  #garage-bank { font-size: 18px; color: #ffcc00; margin-top: 14px; text-shadow: 0 0 10px rgba(255,200,0,0.4); }
   #garage-bank span { font-size: 26px; font-weight: bold; }
 
-  /* Upgrade cards */
-  .upgrade-card {
-    background: rgba(10,16,30,0.9);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 20px 24px;
-    margin-bottom: 14px;
-    transition: border-color 0.2s;
-  }
+  .upgrade-card { background: rgba(10,16,30,0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 20px 24px; margin-bottom: 14px; transition: border-color 0.2s; }
   .upgrade-card:hover { border-color: rgba(255,200,0,0.3); }
   .upgrade-card.maxed { border-color: rgba(0,255,136,0.3); opacity: 0.75; }
 
-  .ug-top {
-    display: flex; align-items: flex-start;
-    justify-content: space-between; margin-bottom: 12px;
-  }
-  .ug-name {
-    font-size: 15px; font-weight: bold; color: #fff;
-    letter-spacing: 1px; margin-bottom: 3px;
-  }
+  .ug-top  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .ug-name { font-size: 15px; font-weight: bold; color: #fff; letter-spacing: 1px; margin-bottom: 3px; }
   .ug-desc { font-size: 11px; color: rgba(255,255,255,0.4); max-width: 340px; }
-  .ug-stat {
-    text-align: right; flex-shrink: 0; margin-left: 16px;
-  }
+  .ug-stat { text-align: right; flex-shrink: 0; margin-left: 16px; }
   .ug-stat-cur  { font-size: 11px; color: rgba(255,255,255,0.35); }
   .ug-stat-next { font-size: 13px; color: #00ff88; font-weight: bold; }
   .ug-stat-next.maxed-val { color: rgba(0,255,136,0.5); font-size: 11px; }
 
-  /* Level pips */
-  .ug-pips {
-    display: flex; gap: 5px; align-items: center; margin-bottom: 12px;
-  }
-  .pip {
-    width: 28px; height: 5px; border-radius: 3px;
-    background: rgba(255,255,255,0.1);
-    transition: background 0.2s;
-  }
+  .ug-pips { display: flex; gap: 5px; align-items: center; margin-bottom: 12px; }
+  .pip { width: 28px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); transition: background 0.2s; }
   .pip.filled { background: #ffcc00; }
   .pip.filled.maxed { background: #00ff88; }
 
-  /* Buy button */
-  .ug-bottom {
-    display: flex; align-items: center;
-    justify-content: space-between;
-  }
-  .ug-cost { font-size: 12px; color: rgba(255,200,0,0.7); }
+  .ug-bottom  { display: flex; align-items: center; justify-content: space-between; }
+  .ug-cost    { font-size: 12px; color: rgba(255,200,0,0.7); }
   .ug-cost.cant-afford { color: rgba(255,60,60,0.7); }
   .buy-btn {
-    padding: 8px 22px;
-    border: 1px solid rgba(255,200,0,0.5);
-    border-radius: 5px;
-    background: transparent;
-    color: #ffcc00;
-    font-family: 'Courier New', monospace;
-    font-size: 12px; font-weight: bold;
-    letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, transform 0.1s;
+    padding: 8px 22px; border: 1px solid rgba(255,200,0,0.5); border-radius: 5px;
+    background: transparent; color: #ffcc00; font-family: 'Courier New', monospace;
+    font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s;
   }
-  .buy-btn:hover:not(:disabled) {
-    background: #ffcc00; color: #000;
-    transform: translateY(-1px);
-  }
+  .buy-btn:hover:not(:disabled) { background: #ffcc00; color: #000; transform: translateY(-1px); }
   .buy-btn:active:not(:disabled) { transform: translateY(0); }
-  .buy-btn:disabled {
-    opacity: 0.35; cursor: not-allowed; border-color: rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.3);
-  }
-  .buy-btn.maxed-btn {
-    border-color: rgba(0,255,136,0.3); color: rgba(0,255,136,0.5);
-    cursor: default;
-  }
+  .buy-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.3); }
+  .buy-btn.maxed-btn { border-color: rgba(0,255,136,0.3); color: rgba(0,255,136,0.5); cursor: default; }
 
   #garage-fly-btn {
-    display: block; width: 100%; margin-top: 24px;
-    padding: 14px; border: none; border-radius: 8px;
-    background: #00ff88; color: #000;
-    font-family: 'Courier New', monospace;
-    font-size: 15px; font-weight: bold;
-    letter-spacing: 3px; text-transform: uppercase;
-    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+    display: block; width: 100%; margin-top: 24px; padding: 14px;
+    border: none; border-radius: 8px; background: #00ff88; color: #000;
+    font-family: 'Courier New', monospace; font-size: 15px; font-weight: bold;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
   }
   #garage-fly-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-  #garage-fly-btn:active { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -334,38 +256,48 @@
     CARGO: <span id="v-cargo">3 / 3</span><br>
     DIST:&nbsp; <span id="v-dist">0</span> m
   </div>
-
   <div id="coins-hud">⬡ BANK: <span id="v-coins">0</span></div>
-
   <div id="progress-wrap">
     TO FINISH: <span id="v-remain">500</span> m
     <div id="prog-track"><div id="prog-fill"></div></div>
   </div>
-
   <div id="batt-wrap">
     ⚡ BATTERY
     <div id="batt-track"><div id="batt-fill"></div></div>
     <div id="batt-pct">100%</div>
   </div>
-
   <div id="batt-dead">⚠ BATTERY DEAD — GLIDING</div>
-
   <canvas id="tilt-canvas" width="90" height="90"></canvas>
   <div id="controls-hint">
     [SPACE] Thrust Up<br>
     [W / S] Pitch Fwd / Back<br>
     [A / D] Roll Left / Right<br>
     [Q / E] Yaw Left / Right<br>
-    [R]&nbsp;&nbsp;&nbsp; Reset
+    [R]&nbsp;&nbsp;&nbsp; Reset &nbsp; [G] Garage
   </div>
-  <div id="step-tag">Step 4 · The Garage</div>
+  <div id="step-tag">Step 5 · Polish</div>
+</div>
+
+<!-- Touch controls -->
+<div id="touch-controls">
+  <div id="joystick-zone">
+    <div id="joystick-base"></div>
+    <div id="joystick-knob"></div>
+  </div>
+  <div id="yaw-btns">
+    <div class="yaw-btn" id="yaw-left">◀</div>
+    <div class="yaw-btn" id="yaw-right">▶</div>
+  </div>
+  <div id="thrust-btn">
+    <div id="thrust-btn-icon">▲</div>
+    THRUST
+  </div>
 </div>
 
 <!-- Run-end overlay -->
 <div id="end-overlay">
   <div id="end-title">---</div>
   <div id="end-scenario"></div>
-
   <div id="payout-card">
     <div class="pay-row" id="pr-dist">
       <span class="pay-label">Distance bonus</span>
@@ -388,9 +320,7 @@
       <span class="pay-val" id="pv-total">0</span>
     </div>
   </div>
-
   <div id="bank-line">TOTAL BANK: <span id="pv-bank">0</span> coins</div>
-
   <div class="end-btns">
     <button class="end-btn btn-garage" id="end-garage-btn">⚙ GARAGE</button>
     <button class="end-btn btn-fly"    id="end-fly-btn">▶ FLY AGAIN</button>
@@ -406,11 +336,7 @@
       <div id="garage-subtitle">Spend coins — upgrades persist between runs</div>
       <div id="garage-bank">BANK: <span id="gv-bank">0</span> ⬡</div>
     </div>
-
-    <div id="upgrade-list">
-      <!-- Upgrade cards injected by JS -->
-    </div>
-
+    <div id="upgrade-list"></div>
     <button id="garage-fly-btn">▶ TAKE OFF</button>
   </div>
 </div>
@@ -429,48 +355,11 @@ import * as THREE from 'three';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
 
 // ─── UPGRADE DEFINITIONS ──────────────────────────────────────────────────
-/*
-  Each upgrade has up to 5 levels. Level 0 = base (unupgraded).
-  `values` array has 6 entries: [base, lvl1, lvl2, lvl3, lvl4, lvl5]
-  `costs`  array has 5 entries: cost to go from level N-1 → N
-*/
 const UPGRADES = [
-  {
-    id:     'battery',
-    name:   'High-Density Batteries',
-    desc:   'Increases total flight time — more thrust = more distance.',
-    icon:   '⚡',
-    unit:   ' units',
-    values: [100, 150, 220, 310, 420, 560],
-    costs:  [200, 450, 900, 1600, 2600],
-  },
-  {
-    id:     'thrust',
-    name:   'Motor KV Rating',
-    desc:   'Higher thrust lets you recover altitude faster and fight the wobble.',
-    icon:   '🔺',
-    unit:   ' N',
-    values: [38, 43, 49, 56, 64, 74],
-    costs:  [250, 550, 1050, 1900, 3000],
-  },
-  {
-    id:     'stability',
-    name:   'Gyroscope Tuning',
-    desc:   'Stronger auto-levelling — the drone snaps back to flat much faster.',
-    icon:   '◎',
-    unit:   '×',
-    values: [1.0, 1.5, 2.1, 2.9, 3.8, 5.0],
-    costs:  [175, 400, 800, 1450, 2400],
-  },
-  {
-    id:     'chassis',
-    name:   'Reinforced Chassis',
-    desc:   'Raises the crash velocity threshold — hit walls without instant destruction.',
-    icon:   '🛡',
-    unit:   ' m/s',
-    values: [12, 15, 19, 24, 30, 38],
-    costs:  [300, 650, 1200, 2100, 3300],
-  },
+  { id: 'battery',   name: 'High-Density Batteries', desc: 'More flight time — more distance, more grinding.', icon: '⚡', unit: ' units', values: [100,150,220,310,420,560], costs: [200,450,900,1600,2600] },
+  { id: 'thrust',    name: 'Motor KV Rating',         desc: 'Higher thrust lets you recover altitude faster.',   icon: '🔺', unit: ' N',     values: [38,43,49,56,64,74],     costs: [250,550,1050,1900,3000] },
+  { id: 'stability', name: 'Gyroscope Tuning',        desc: 'Stronger auto-levelling snap back to flat.',        icon: '◎', unit: '×',      values: [1.0,1.5,2.1,2.9,3.8,5.0], costs: [175,400,800,1450,2400] },
+  { id: 'chassis',   name: 'Reinforced Chassis',      desc: 'Survive harder impacts without destruction.',       icon: '🛡', unit: ' m/s',  values: [12,15,19,24,30,38],     costs: [300,650,1200,2100,3300] },
 ];
 
 // ─── PERSISTENCE ──────────────────────────────────────────────────────────
@@ -478,24 +367,19 @@ function loadInt(key, def) { return parseInt(localStorage.getItem(key) ?? def, 1
 function saveInt(key, val) { localStorage.setItem(key, String(val)); }
 
 let totalCoins = loadInt('gyrodrop_coins', 0);
-
 const upgradeLevels = {};
-UPGRADES.forEach(u => {
-  upgradeLevels[u.id] = loadInt(`gyrodrop_upg_${u.id}`, 0);
-});
+UPGRADES.forEach(u => { upgradeLevels[u.id] = loadInt(`gyrodrop_upg_${u.id}`, 0); });
 
 function saveAll() {
   saveInt('gyrodrop_coins', totalCoins);
   UPGRADES.forEach(u => saveInt(`gyrodrop_upg_${u.id}`, upgradeLevels[u.id]));
 }
 
-// ─── DERIVE LIVE PHYSICS VALUES FROM UPGRADES ─────────────────────────────
 function getUpgradeValue(id) {
   const u = UPGRADES.find(x => x.id === id);
   return u.values[upgradeLevels[id]];
 }
 
-// These are `let` so we can re-read them when resetting a run
 let MAX_BATTERY    = getUpgradeValue('battery');
 let THRUST_POWER   = getUpgradeValue('thrust');
 let AUTO_STABILIZE = getUpgradeValue('stability');
@@ -511,7 +395,6 @@ const YAW_POWER     = 3.5;
 const LIN_DAMP      = 0.28;
 const ANG_DAMP      = 0.45;
 const FINISH_Z      = -500;
-
 const DX = 1.0, DY = 0.11, DZ = 1.0;
 const LIP_H = 0.12, LIP_T = 0.052;
 const CR = 0.27;
@@ -529,13 +412,10 @@ let battery   = MAX_BATTERY;
 let gameState = 'flying';
 let runEnded  = false;
 
-// ─── SEEDED PRNG ──────────────────────────────────────────────────────────
+// ─── PRNG ─────────────────────────────────────────────────────────────────
 function makePRNG(seed) {
   let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+  return () => { s = (Math.imul(1664525,s)+1013904223)>>>0; return s/4294967296; };
 }
 
 // ─── CANNON WORLD ─────────────────────────────────────────────────────────
@@ -544,728 +424,686 @@ world.broadphase = new CANNON.SAPBroadphase(world);
 world.allowSleep = true;
 world.solver.iterations = 20;
 
-const matDrone  = new CANNON.Material('drone');
-const matCargo  = new CANNON.Material('cargo');
-const matGround = new CANNON.Material('ground');
-const matWall   = new CANNON.Material('wall');
+const matDrone=new CANNON.Material('drone'), matCargo=new CANNON.Material('cargo');
+const matGround=new CANNON.Material('ground'), matWall=new CANNON.Material('wall');
+world.addContactMaterial(new CANNON.ContactMaterial(matDrone,matCargo,  {friction:0.85,restitution:0.06}));
+world.addContactMaterial(new CANNON.ContactMaterial(matGround,matCargo, {friction:0.55,restitution:0.2}));
+world.addContactMaterial(new CANNON.ContactMaterial(matGround,matDrone, {friction:0.4, restitution:0.05}));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall,matDrone,   {friction:0.3, restitution:0.25}));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall,matCargo,   {friction:0.5, restitution:0.15}));
 
-world.addContactMaterial(new CANNON.ContactMaterial(matDrone, matCargo,   { friction: 0.85, restitution: 0.06 }));
-world.addContactMaterial(new CANNON.ContactMaterial(matGround, matCargo,  { friction: 0.55, restitution: 0.2  }));
-world.addContactMaterial(new CANNON.ContactMaterial(matGround, matDrone,  { friction: 0.4,  restitution: 0.05 }));
-world.addContactMaterial(new CANNON.ContactMaterial(matWall,   matDrone,  { friction: 0.3,  restitution: 0.25 }));
-world.addContactMaterial(new CANNON.ContactMaterial(matWall,   matCargo,  { friction: 0.5,  restitution: 0.15 }));
-
-const gndBody = new CANNON.Body({ mass: 0, material: matGround });
+const gndBody=new CANNON.Body({mass:0,material:matGround});
 gndBody.addShape(new CANNON.Plane());
-gndBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+gndBody.quaternion.setFromEuler(-Math.PI/2,0,0);
 world.addBody(gndBody);
 
 // ─── THREE.JS ─────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.25;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05080f);
-scene.fog = new THREE.FogExp2(0x05080f, 0.014);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x04060e);
+scene.fog=new THREE.FogExp2(0x04060e,0.013);
 
-const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 700);
-function onResize() {
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-}
-onResize();
-addEventListener('resize', onResize);
+const camera=new THREE.PerspectiveCamera(58,1,0.1,700);
+function onResize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+onResize(); addEventListener('resize',onResize);
 
 // ─── LIGHTING ─────────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x1a2a44, 3));
-const sun = new THREE.DirectionalLight(0xfff4e0, 3.5);
-sun.position.set(15, 30, 10);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 150 });
+scene.add(new THREE.AmbientLight(0x1a2a44,3.5));
+const sun=new THREE.DirectionalLight(0xfff8ee,4.0);
+sun.position.set(18,35,12); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-50,right:50,top:50,bottom:-50,near:1,far:180});
 scene.add(sun);
-scene.add(new THREE.HemisphereLight(0x0022aa, 0x0a1a08, 1.4));
+scene.add(new THREE.HemisphereLight(0x0022bb,0x0b1e09,1.8));
 
-const rotorLights = [0,1,2,3].map(() => {
-  const l = new THREE.PointLight(0x00ffaa, 0.5, 3.5);
-  scene.add(l);
-  return l;
-});
+// Subtle fill light from the canyon mouth
+const fillLight=new THREE.PointLight(0x003366,2,80);
+fillLight.position.set(0,25,-50);
+scene.add(fillLight);
+
+const rotorLights=[0,1,2,3].map(()=>{const l=new THREE.PointLight(0x00ffaa,0.5,4);scene.add(l);return l;});
 
 // ─── GROUND ───────────────────────────────────────────────────────────────
-const gndMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(600, 600, 60, 60),
-  new THREE.MeshStandardMaterial({ color: 0x0c140c, roughness: 0.95, metalness: 0.04 })
+const gndMesh=new THREE.Mesh(
+  new THREE.PlaneGeometry(600,600,60,60),
+  new THREE.MeshStandardMaterial({color:0x0b130b,roughness:0.97,metalness:0.03})
 );
-gndMesh.rotation.x = -Math.PI / 2;
-gndMesh.receiveShadow = true;
-scene.add(gndMesh);
-
-const grid = new THREE.GridHelper(600, 100, 0x00ff4405, 0x00ff4403);
-grid.position.z = -300;
-scene.add(grid);
+gndMesh.rotation.x=-Math.PI/2; gndMesh.receiveShadow=true; scene.add(gndMesh);
+const grid=new THREE.GridHelper(600,100,0x00ff4406,0x00ff4404);
+grid.position.z=-300; scene.add(grid);
 
 // ─── STARS ────────────────────────────────────────────────────────────────
 {
-  const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(3600);
-  for (let i = 0; i < pos.length; i += 3) {
-    const r = 300 + Math.random() * 100;
-    const theta = Math.random() * Math.PI * 2;
-    const phi   = Math.random() * Math.PI * 0.48 + 0.06;
-    pos[i]   = r * Math.sin(phi) * Math.cos(theta);
-    pos[i+1] = r * Math.cos(phi) + 5;
-    pos[i+2] = r * Math.sin(phi) * Math.sin(theta) - 250;
+  const geo=new THREE.BufferGeometry();
+  const pos=new Float32Array(4500);
+  for(let i=0;i<pos.length;i+=3){
+    const r=280+Math.random()*120, theta=Math.random()*Math.PI*2, phi=Math.random()*Math.PI*0.48+0.06;
+    pos[i]=r*Math.sin(phi)*Math.cos(theta); pos[i+1]=r*Math.cos(phi)+5; pos[i+2]=r*Math.sin(phi)*Math.sin(theta)-250;
   }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.4, sizeAttenuation: true })));
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.45,sizeAttenuation:true})));
 }
 
 // ─── LAUNCH PAD ───────────────────────────────────────────────────────────
 {
-  const pad = new THREE.Mesh(
-    new THREE.CylinderGeometry(3.5, 3.5, 0.1, 24),
-    new THREE.MeshStandardMaterial({ color: 0x1a2030, roughness: 0.4, metalness: 0.7 })
-  );
-  pad.position.set(0, 0.05, 0);
-  pad.receiveShadow = true;
-  scene.add(pad);
-  for (let a = 0; a < 8; a++) {
-    const mark = new THREE.Mesh(
-      new THREE.BoxGeometry(0.15, 0.12, 1.2),
-      new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x443300 })
-    );
-    const angle = (a / 8) * Math.PI * 2;
-    mark.position.set(Math.cos(angle) * 2.5, 0.12, Math.sin(angle) * 2.5);
-    mark.rotation.y = -angle;
-    scene.add(mark);
+  const pad=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,0.1,24),
+    new THREE.MeshStandardMaterial({color:0x1a2030,roughness:0.4,metalness:0.7}));
+  pad.position.set(0,0.05,0); pad.receiveShadow=true; scene.add(pad);
+  for(let a=0;a<8;a++){
+    const mark=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.12,1.2),
+      new THREE.MeshStandardMaterial({color:0xffaa00,emissive:0x443300}));
+    const angle=(a/8)*Math.PI*2;
+    mark.position.set(Math.cos(angle)*2.5,0.12,Math.sin(angle)*2.5);
+    mark.rotation.y=-angle; scene.add(mark);
   }
 }
 
-// ─── PROCEDURAL CANYON ────────────────────────────────────────────────────
-const wallBodies = [], wallMeshes = [];
-
-const ROCK_MATS = [
-  new THREE.MeshStandardMaterial({ color: 0x2c1e10, roughness: 0.94, metalness: 0.02 }),
-  new THREE.MeshStandardMaterial({ color: 0x38251a, roughness: 0.92, metalness: 0.02 }),
-  new THREE.MeshStandardMaterial({ color: 0x201510, roughness: 0.96, metalness: 0.01 }),
+// ─── CANYON ───────────────────────────────────────────────────────────────
+const wallBodies=[],wallMeshes=[];
+const ROCK_MATS=[
+  new THREE.MeshStandardMaterial({color:0x2c1e10,roughness:0.94,metalness:0.02}),
+  new THREE.MeshStandardMaterial({color:0x38251a,roughness:0.92,metalness:0.02}),
+  new THREE.MeshStandardMaterial({color:0x201510,roughness:0.96,metalness:0.01}),
 ];
-const PILLAR_MAT = new THREE.MeshStandardMaterial({ color: 0x181008, roughness: 0.91, metalness: 0.03 });
+const PILLAR_MAT=new THREE.MeshStandardMaterial({color:0x181008,roughness:0.91,metalness:0.03});
 
-function addWallBody(x, y, z, hw, hh, hd) {
-  const b = new CANNON.Body({ mass: 0, material: matWall });
-  b.addShape(new CANNON.Box(new CANNON.Vec3(hw, hh, hd)));
-  b.position.set(x, y, z);
-  world.addBody(b);
-  wallBodies.push(b);
-}
-function addWallMesh(x, y, z, w, h, d, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  m.position.set(x, y, z);
-  m.receiveShadow = true;
-  scene.add(m);
-  wallMeshes.push(m);
-}
+function addWallBody(x,y,z,hw,hh,hd){const b=new CANNON.Body({mass:0,material:matWall});b.addShape(new CANNON.Box(new CANNON.Vec3(hw,hh,hd)));b.position.set(x,y,z);world.addBody(b);wallBodies.push(b);}
+function addWallMesh(x,y,z,w,h,d,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);wallMeshes.push(m);}
 
-function generateCanyon() {
-  const rng = makePRNG(4242);
-  const SEG_COUNT = 36, SEG_LEN = 15, WALL_W = 8, WALL_OVER = 2, CANYON_START_Z = -22;
+function generateCanyon(){
+  const rng=makePRNG(4242);
+  const SEG_COUNT=36,SEG_LEN=15,WALL_W=8,WALL_OVER=2,CANYON_START_Z=-22;
+  const pathX=[0];
+  for(let i=1;i<SEG_COUNT;i++) pathX.push(Math.max(-14,Math.min(14,pathX[i-1]+(rng()-0.5)*5)));
 
-  const pathX = [0];
-  for (let i = 1; i < SEG_COUNT; i++) {
-    pathX.push(Math.max(-14, Math.min(14, pathX[i-1] + (rng()-0.5)*5)));
-  }
-
-  for (let i = 0; i < SEG_COUNT; i++) {
-    const segCX   = pathX[i];
-    const segCZ   = CANYON_START_Z - i * SEG_LEN - SEG_LEN / 2;
-    const progress = i / (SEG_COUNT - 1);
-    const halfW   = THREE.MathUtils.lerp(30, 11, progress) + Math.sin(i * 1.83) * 4.5;
-    const wallH   = 13 + rng() * 11;
-    const wallD   = SEG_LEN + WALL_OVER;
-    const leftX   = segCX - halfW - WALL_W / 2;
-    const rightX  = segCX + halfW + WALL_W / 2;
-    const mat     = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
-
-    addWallBody(leftX,  wallH/2, segCZ, WALL_W/2, wallH/2, wallD/2);
-    addWallBody(rightX, wallH/2, segCZ, WALL_W/2, wallH/2, wallD/2);
-    addWallMesh(leftX,  wallH/2, segCZ, WALL_W, wallH, wallD, mat);
-    addWallMesh(rightX, wallH/2, segCZ, WALL_W, wallH, wallD, mat);
-
-    for (let t = 0; t < 4; t++) {
-      const tz = segCZ + (rng()-0.5)*(SEG_LEN*0.82);
-      const th = 1.5 + rng()*5, tw = 0.9 + rng()*2;
-      const trx = (rng()-0.5)*WALL_W*0.5;
-      const tm  = ROCK_MATS[Math.floor(rng()*ROCK_MATS.length)];
-      addWallMesh(leftX+trx,  wallH+th/2, tz, tw, th, tw, tm);
-      addWallMesh(rightX+trx, wallH+th/2, tz, tw, th, tw, tm);
+  for(let i=0;i<SEG_COUNT;i++){
+    const segCX=pathX[i],segCZ=CANYON_START_Z-i*SEG_LEN-SEG_LEN/2,progress=i/(SEG_COUNT-1);
+    const halfW=THREE.MathUtils.lerp(30,11,progress)+Math.sin(i*1.83)*4.5;
+    const wallH=13+rng()*11,wallD=SEG_LEN+WALL_OVER;
+    const leftX=segCX-halfW-WALL_W/2,rightX=segCX+halfW+WALL_W/2;
+    const mat=ROCK_MATS[Math.floor(rng()*ROCK_MATS.length)];
+    addWallBody(leftX, wallH/2,segCZ,WALL_W/2,wallH/2,wallD/2);
+    addWallBody(rightX,wallH/2,segCZ,WALL_W/2,wallH/2,wallD/2);
+    addWallMesh(leftX, wallH/2,segCZ,WALL_W,wallH,wallD,mat);
+    addWallMesh(rightX,wallH/2,segCZ,WALL_W,wallH,wallD,mat);
+    for(let t=0;t<4;t++){
+      const tz=segCZ+(rng()-0.5)*(SEG_LEN*0.82),th=1.5+rng()*5,tw=0.9+rng()*2,trx=(rng()-0.5)*WALL_W*0.5;
+      const tm=ROCK_MATS[Math.floor(rng()*ROCK_MATS.length)];
+      addWallMesh(leftX+trx, wallH+th/2,tz,tw,th,tw,tm);
+      addWallMesh(rightX+trx,wallH+th/2,tz,tw,th,tw,tm);
     }
-
-    if (progress > 0.4 && rng() > 0.65) {
-      const ohD = SEG_LEN*0.55, ohH = 2.5 + rng()*3, ohZ = segCZ + (rng()-0.5)*4;
-      const ohW = 2 + rng()*3;
-      if (rng() > 0.5) {
-        addWallBody(leftX+WALL_W/2+ohW/2, wallH-ohH/2, ohZ, ohW/2, ohH/2, ohD/2);
-        addWallMesh(leftX+WALL_W/2+ohW/2, wallH-ohH/2, ohZ, ohW, ohH, ohD, mat);
-      } else {
-        addWallBody(rightX-WALL_W/2-ohW/2, wallH-ohH/2, ohZ, ohW/2, ohH/2, ohD/2);
-        addWallMesh(rightX-WALL_W/2-ohW/2, wallH-ohH/2, ohZ, ohW, ohH, ohD, mat);
-      }
+    if(progress>0.4&&rng()>0.65){
+      const ohD=SEG_LEN*0.55,ohH=2.5+rng()*3,ohZ=segCZ+(rng()-0.5)*4,ohW=2+rng()*3;
+      if(rng()>0.5){addWallBody(leftX+WALL_W/2+ohW/2,wallH-ohH/2,ohZ,ohW/2,ohH/2,ohD/2);addWallMesh(leftX+WALL_W/2+ohW/2,wallH-ohH/2,ohZ,ohW,ohH,ohD,mat);}
+      else         {addWallBody(rightX-WALL_W/2-ohW/2,wallH-ohH/2,ohZ,ohW/2,ohH/2,ohD/2);addWallMesh(rightX-WALL_W/2-ohW/2,wallH-ohH/2,ohZ,ohW,ohH,ohD,mat);}
     }
   }
-
-  for (let i = 4; i < SEG_COUNT - 2; i += 3 + Math.floor(rng()*3)) {
-    const progress = i / (SEG_COUNT-1);
-    const segCX = pathX[i];
-    const segZ  = CANYON_START_Z - i * SEG_LEN;
-    const halfW = THREE.MathUtils.lerp(30, 11, progress);
-    const numPill = rng() > 0.55 ? 2 : 1;
-    for (let p = 0; p < numPill; p++) {
-      const px = segCX + (rng()-0.5)*halfW*1.1;
-      const pZ = segZ  + (rng()-0.5)*SEG_LEN*0.6;
-      const ph = 3 + rng()*10, pw = 1.0 + rng()*1.4;
-      addWallBody(px, ph/2, pZ, pw/2, ph/2, pw/2);
-      const pm = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, pw), PILLAR_MAT);
-      pm.position.set(px, ph/2, pZ);
-      pm.receiveShadow = true;
-      scene.add(pm);
-      wallMeshes.push(pm);
+  for(let i=4;i<SEG_COUNT-2;i+=3+Math.floor(rng()*3)){
+    const progress=i/(SEG_COUNT-1),segCX=pathX[i],segZ=CANYON_START_Z-i*SEG_LEN,halfW=THREE.MathUtils.lerp(30,11,progress);
+    const numPill=rng()>0.55?2:1;
+    for(let p=0;p<numPill;p++){
+      const px=segCX+(rng()-0.5)*halfW*1.1,pZ=segZ+(rng()-0.5)*SEG_LEN*0.6,ph=3+rng()*10,pw=1.0+rng()*1.4;
+      addWallBody(px,ph/2,pZ,pw/2,ph/2,pw/2);
+      const pm=new THREE.Mesh(new THREE.BoxGeometry(pw,ph,pw),PILLAR_MAT);
+      pm.position.set(px,ph/2,pZ); pm.receiveShadow=true; scene.add(pm); wallMeshes.push(pm);
     }
   }
-
   buildFinishLine();
 }
 
-function buildFinishLine() {
-  const fz = FINISH_Z;
-  const fg = new THREE.Group();
-  const postMat = new THREE.MeshStandardMaterial({
-    color: 0xffcc00, emissive: 0x885500, emissiveIntensity: 0.6, roughness: 0.3, metalness: 0.7
+function buildFinishLine(){
+  const fg=new THREE.Group();
+  const postMat=new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0x885500,emissiveIntensity:0.6,roughness:0.3,metalness:0.7});
+  [-11,11].forEach(x=>{const post=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.45,20,10),postMat);post.position.set(x,10,0);fg.add(post);});
+  fg.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(22.7,0.6,0.6),postMat),{position:new THREE.Vector3(0,20,0)}));
+  [0xff2200,0xff8800,0xffee00,0x22ff44,0x00aaff,0xaa44ff].forEach((col,i)=>{
+    const bx=-9+i*3.6;
+    const ball=new THREE.Mesh(new THREE.SphereGeometry(0.42,10,7),new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:2.0}));
+    ball.position.set(bx,20.5,0); fg.add(ball);
+    const pl=new THREE.PointLight(col,3,9); pl.position.set(bx,20.5,0); fg.add(pl);
   });
-  [-11, 11].forEach(x => {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 20, 10), postMat);
-    post.position.set(x, 10, 0);
-    fg.add(post);
-  });
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(22.7, 0.6, 0.6), postMat);
-  bar.position.set(0, 20, 0);
-  fg.add(bar);
-  [0xff2200,0xff8800,0xffee00,0x22ff44,0x00aaff,0xaa44ff].forEach((col, i) => {
-    const bx = -9 + i * 3.6;
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 7),
-      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 2.0 }));
-    ball.position.set(bx, 20.5, 0);
-    fg.add(ball);
-    const pl = new THREE.PointLight(col, 3, 9);
-    pl.position.set(bx, 20.5, 0);
-    fg.add(pl);
-  });
-  for (let d = 0; d < 5; d++) {
-    const chev = new THREE.Mesh(new THREE.BoxGeometry(22, 0.06, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0x443300, emissiveIntensity: 0.4 }));
-    chev.position.set(0, 0.04, d*4+2);
-    fg.add(chev);
+  for(let d=0;d<5;d++){
+    const chev=new THREE.Mesh(new THREE.BoxGeometry(22,0.06,0.5),new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0x443300,emissiveIntensity:0.4}));
+    chev.position.set(0,0.04,d*4+2); fg.add(chev);
   }
-  [-11, 11].forEach(x => {
-    const beacon = new THREE.PointLight(0xffcc00, 2.5, 18);
-    beacon.position.set(x, 1.5, 0);
-    fg.add(beacon);
-  });
-  fg.position.set(0, 0, fz);
-  scene.add(fg);
+  [-11,11].forEach(x=>{const b=new THREE.PointLight(0xffcc00,2.5,18);b.position.set(x,1.5,0);fg.add(b);});
+  fg.position.set(0,0,FINISH_Z); scene.add(fg);
 }
 
 generateCanyon();
 
-// ─── DRONE BODY ───────────────────────────────────────────────────────────
-const droneBody = new CANNON.Body({ mass: DRONE_MASS, material: matDrone });
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, DY, DZ)));
-const lipY = DY + LIP_H;
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),   new CANNON.Vec3(0, lipY, -(DZ-LIP_T)));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),   new CANNON.Vec3(0, lipY,  (DZ-LIP_T)));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),   new CANNON.Vec3(-(DX-LIP_T), lipY, 0));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),   new CANNON.Vec3( (DX-LIP_T), lipY, 0));
-droneBody.linearDamping  = LIN_DAMP;
-droneBody.angularDamping = ANG_DAMP;
+// ─── DRONE ────────────────────────────────────────────────────────────────
+const droneBody=new CANNON.Body({mass:DRONE_MASS,material:matDrone});
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX,DY,DZ)));
+const lipY=DY+LIP_H;
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX,LIP_H,LIP_T)),   new CANNON.Vec3(0,lipY,-(DZ-LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX,LIP_H,LIP_T)),   new CANNON.Vec3(0,lipY, (DZ-LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T,LIP_H,DZ)),   new CANNON.Vec3(-(DX-LIP_T),lipY,0));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T,LIP_H,DZ)),   new CANNON.Vec3( (DX-LIP_T),lipY,0));
+droneBody.linearDamping=LIN_DAMP; droneBody.angularDamping=ANG_DAMP;
 world.addBody(droneBody);
 
-// ─── CARGO BODIES ─────────────────────────────────────────────────────────
-const CARGO_COLORS = [0xff6b35, 0x00d4ff, 0xffe033];
-const cargoBodies  = CARGO_COLORS.map(() => {
-  const b = new CANNON.Body({ mass: CARGO_MASS, material: matCargo });
-  b.addShape(new CANNON.Box(new CANNON.Vec3(CR, CR, CR)));
-  b.linearDamping = 0.2; b.angularDamping = 0.35;
-  world.addBody(b);
-  return b;
+const CARGO_COLORS=[0xff6b35,0x00d4ff,0xffe033];
+const cargoBodies=CARGO_COLORS.map(()=>{
+  const b=new CANNON.Body({mass:CARGO_MASS,material:matCargo});
+  b.addShape(new CANNON.Box(new CANNON.Vec3(CR,CR,CR)));
+  b.linearDamping=0.2; b.angularDamping=0.35; world.addBody(b); return b;
 });
 
 // ─── DRONE MESH ───────────────────────────────────────────────────────────
-const droneGroup = new THREE.Group();
-scene.add(droneGroup);
+const droneGroup=new THREE.Group(); scene.add(droneGroup);
+droneGroup.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(DX*2,DY*2,DZ*2),
+  new THREE.MeshStandardMaterial({color:0x252830,roughness:0.22,metalness:0.88})),{castShadow:true,receiveShadow:true}));
+droneGroup.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.21,0.16,8),
+  new THREE.MeshStandardMaterial({color:0x181a22,roughness:0.28,metalness:0.92})),{castShadow:true}));
 
-droneGroup.add(Object.assign(new THREE.Mesh(
-  new THREE.BoxGeometry(DX*2, DY*2, DZ*2),
-  new THREE.MeshStandardMaterial({ color: 0x252830, roughness: 0.22, metalness: 0.88 })
-), { castShadow: true, receiveShadow: true }));
-
-droneGroup.add(Object.assign(new THREE.Mesh(
-  new THREE.CylinderGeometry(0.17, 0.21, 0.16, 8),
-  new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.28, metalness: 0.92 })
-), { castShadow: true }));
-
-const ARM_DIRS = [
-  new THREE.Vector3( DX*0.72, 0, -DZ*0.72),
-  new THREE.Vector3(-DX*0.72, 0, -DZ*0.72),
-  new THREE.Vector3( DX*0.72, 0,  DZ*0.72),
-  new THREE.Vector3(-DX*0.72, 0,  DZ*0.72),
+const ARM_DIRS=[
+  new THREE.Vector3( DX*0.72,0,-DZ*0.72),new THREE.Vector3(-DX*0.72,0,-DZ*0.72),
+  new THREE.Vector3( DX*0.72,0, DZ*0.72),new THREE.Vector3(-DX*0.72,0, DZ*0.72),
 ];
-const rotorDiscs = [];
-const armMat   = new THREE.MeshStandardMaterial({ color: 0x1c1e27, roughness: 0.32, metalness: 0.82 });
-const motorMat = new THREE.MeshStandardMaterial({ color: 0x2e3040, roughness: 0.2,  metalness: 0.9  });
-const rotorMat = new THREE.MeshStandardMaterial({
-  color: 0x00ffaa, emissive: 0x00aa66, emissiveIntensity: 0.9,
-  transparent: true, opacity: 0.55, side: THREE.DoubleSide
+const rotorDiscs=[];
+const armMat  =new THREE.MeshStandardMaterial({color:0x1c1e27,roughness:0.32,metalness:0.82});
+const motorMat=new THREE.MeshStandardMaterial({color:0x2e3040,roughness:0.2,metalness:0.9});
+const rotorMat=new THREE.MeshStandardMaterial({color:0x00ffaa,emissive:0x00aa66,emissiveIntensity:0.9,transparent:true,opacity:0.55,side:THREE.DoubleSide});
+
+ARM_DIRS.forEach(dir=>{
+  const arm=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.07,0.62),armMat);
+  arm.position.copy(dir).multiplyScalar(0.5); arm.lookAt(dir.clone().multiplyScalar(3)); arm.castShadow=true; droneGroup.add(arm);
+  const motor=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,0.13,8),motorMat);
+  motor.position.set(dir.x,0.08,dir.z); droneGroup.add(motor);
+  const rotor=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.02,16),rotorMat);
+  rotor.position.set(dir.x,0.13,dir.z); droneGroup.add(rotor); rotorDiscs.push(rotor);
+});
+const legMat=new THREE.MeshStandardMaterial({color:0x111318,roughness:0.5,metalness:0.7});
+[[-0.7,0,-0.7],[0.7,0,-0.7],[-0.7,0,0.7],[0.7,0,0.7]].forEach(([x,,z])=>{
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.28,5),legMat);
+  leg.position.set(x,-DY-0.14,z); droneGroup.add(leg);
 });
 
-ARM_DIRS.forEach(dir => {
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.62), armMat);
-  arm.position.copy(dir).multiplyScalar(0.5);
-  arm.lookAt(dir.clone().multiplyScalar(3));
-  arm.castShadow = true;
-  droneGroup.add(arm);
-  const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.13, 8), motorMat);
-  motor.position.set(dir.x, 0.08, dir.z);
-  droneGroup.add(motor);
-  const rotor = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.02, 16), rotorMat);
-  rotor.position.set(dir.x, 0.13, dir.z);
-  droneGroup.add(rotor);
-  rotorDiscs.push(rotor);
+const cargoMeshes=CARGO_COLORS.map(color=>{
+  const m=new THREE.Mesh(new THREE.BoxGeometry(CR*2,CR*2,CR*2),new THREE.MeshStandardMaterial({color,roughness:0.55,metalness:0.15}));
+  m.castShadow=true; scene.add(m); return m;
 });
 
-const legMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.5, metalness: 0.7 });
-[[-0.7,0,-0.7],[0.7,0,-0.7],[-0.7,0,0.7],[0.7,0,0.7]].forEach(([x,,z]) => {
-  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.28, 5), legMat);
-  leg.position.set(x, -DY - 0.14, z);
-  droneGroup.add(leg);
-});
+// ─── ENGINE GLOW PARTICLE SYSTEM ──────────────────────────────────────────
+const PARTICLE_COUNT = 600;
+const pPos  = new Float32Array(PARTICLE_COUNT * 3);
+const pCol  = new Float32Array(PARTICLE_COUNT * 3);
+const pSize = new Float32Array(PARTICLE_COUNT);
 
-// ─── CARGO MESHES ─────────────────────────────────────────────────────────
-const cargoMeshes = CARGO_COLORS.map(color => {
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(CR*2, CR*2, CR*2),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.15 })
-  );
-  m.castShadow = true;
-  scene.add(m);
-  return m;
-});
+// hide all particles off-screen initially
+for(let i=0;i<PARTICLE_COUNT;i++) { pPos[i*3+1]=-2000; pSize[i]=0; }
 
-// ─── INPUT ────────────────────────────────────────────────────────────────
-const K = {};
-const PREVENT = new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
-addEventListener('keydown', e => {
-  K[e.code] = true;
-  if (PREVENT.has(e.code)) e.preventDefault();
-  if (e.code === 'KeyG' && runEnded)  openGarage();
-  if (e.code === 'KeyR')              doReset();
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+pGeo.setAttribute('color',    new THREE.BufferAttribute(pCol,3));
+pGeo.setAttribute('size',     new THREE.BufferAttribute(pSize,1));
+
+const pMat = new THREE.PointsMaterial({
+  size: 0.18, vertexColors: true, transparent: true, opacity: 0.88,
+  blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
 });
-addEventListener('keyup', e => { K[e.code] = false; });
+const particleSystem = new THREE.Points(pGeo, pMat);
+scene.add(particleSystem);
+
+// Per-particle state
+const pState = Array.from({length:PARTICLE_COUNT}, ()=>({active:false,x:0,y:0,z:0,vx:0,vy:0,vz:0,life:0,maxLife:0}));
+let nextP = 0;
+
+function emitEngineParticle(ox, oy, oz, thrusting) {
+  const p = pState[nextP % PARTICLE_COUNT];
+  nextP++;
+  p.active = true;
+  p.x = ox + (Math.random()-0.5)*0.18;
+  p.y = oy;
+  p.z = oz + (Math.random()-0.5)*0.18;
+  if (thrusting) {
+    // Downward thrust exhaust plume
+    p.vx = (Math.random()-0.5)*0.5;
+    p.vy = -2.5 - Math.random()*2.5;
+    p.vz = (Math.random()-0.5)*0.5;
+    p.maxLife = 0.25 + Math.random()*0.25;
+  } else {
+    // Idle rotor sparkle — drifts sideways
+    p.vx = (Math.random()-0.5)*0.4;
+    p.vy = 0.2 + Math.random()*0.3;
+    p.vz = (Math.random()-0.5)*0.4;
+    p.maxLife = 0.15 + Math.random()*0.15;
+  }
+  p.life = p.maxLife;
+}
+
+function updateParticles(dt) {
+  const pos = pGeo.attributes.position.array;
+  const col = pGeo.attributes.color.array;
+  const sz  = pGeo.attributes.size.array;
+
+  for(let i=0;i<PARTICLE_COUNT;i++){
+    const p=pState[i];
+    if(!p.active){ sz[i]=0; pos[i*3+1]=-2000; continue; }
+    p.life -= dt;
+    if(p.life<=0){ p.active=false; sz[i]=0; pos[i*3+1]=-2000; continue; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt;
+    const t=p.life/p.maxLife; // 1=fresh, 0=dying
+    pos[i*3]=p.x; pos[i*3+1]=p.y; pos[i*3+2]=p.z;
+    // cyan → blue → fade
+    col[i*3]  = 0.05*t;
+    col[i*3+1]= 0.85*t;
+    col[i*3+2]= 0.7*t;
+    sz[i] = t * (p.vy<0 ? 0.22 : 0.12); // thrust particles bigger
+  }
+  pGeo.attributes.position.needsUpdate=true;
+  pGeo.attributes.color.needsUpdate=true;
+  pGeo.attributes.size.needsUpdate=true;
+}
+
+// ─── INPUT — KEYBOARD ─────────────────────────────────────────────────────
+const K={};
+const PREVENT=new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
+addEventListener('keydown',e=>{
+  K[e.code]=true;
+  if(PREVENT.has(e.code)) e.preventDefault();
+  if(e.code==='KeyG'&&runEnded) openGarage();
+  if(e.code==='KeyR') doReset();
+});
+addEventListener('keyup',e=>{ K[e.code]=false; });
+
+// ─── INPUT — VIRTUAL JOYSTICK (TOUCH) ────────────────────────────────────
+const touch={
+  joystickActive: false,
+  joystickId: null,
+  jBaseX: 0, jBaseY: 0,  // centre of joystick base in page coords
+  jDX: 0, jDY: 0,        // normalised -1..1 output
+  thrusting: false,
+  yawLeft: false, yawRight: false,
+};
+
+const JOYSTICK_RADIUS = 44; // max knob travel in px
+
+function isTouchDevice() { return ('ontouchstart' in window) || navigator.maxTouchPoints > 0; }
+
+if(isTouchDevice()){
+  document.getElementById('touch-controls').style.display='block';
+  document.getElementById('controls-hint').style.display='none';
+  document.getElementById('tilt-canvas').style.display='none';
+
+  const jZone  = document.getElementById('joystick-zone');
+  const jKnob  = document.getElementById('joystick-knob');
+  const tBtn   = document.getElementById('thrust-btn');
+  const yL     = document.getElementById('yaw-left');
+  const yR     = document.getElementById('yaw-right');
+
+  function getJoystickCenter(){
+    const r=jZone.getBoundingClientRect();
+    return {x:r.left+r.width/2, y:r.top+r.height/2};
+  }
+
+  function updateKnob(dx,dy){
+    const len=Math.sqrt(dx*dx+dy*dy);
+    const clamped=Math.min(len,JOYSTICK_RADIUS);
+    const nx=len>0?dx/len:0, ny=len>0?dy/len:0;
+    const kx=nx*clamped, ky=ny*clamped;
+    jKnob.style.transform=`translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+    touch.jDX=nx*Math.min(len/JOYSTICK_RADIUS,1);
+    touch.jDY=ny*Math.min(len/JOYSTICK_RADIUS,1);
+  }
+
+  jZone.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const t=e.changedTouches[0];
+    touch.joystickActive=true; touch.joystickId=t.identifier;
+    const c=getJoystickCenter();
+    touch.jBaseX=c.x; touch.jBaseY=c.y;
+    updateKnob(t.clientX-c.x, t.clientY-c.y);
+  },{passive:false});
+
+  addEventListener('touchmove',e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===touch.joystickId){
+        e.preventDefault();
+        updateKnob(t.clientX-touch.jBaseX, t.clientY-touch.jBaseY);
+      }
+    }
+  },{passive:false});
+
+  addEventListener('touchend',e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===touch.joystickId){
+        touch.joystickActive=false; touch.joystickId=null;
+        touch.jDX=0; touch.jDY=0;
+        jKnob.style.transform='translate(-50%,-50%)';
+      }
+    }
+  });
+
+  // Thrust button
+  tBtn.addEventListener('touchstart',e=>{e.preventDefault();touch.thrusting=true;tBtn.classList.add('active');},{passive:false});
+  tBtn.addEventListener('touchend',  e=>{e.preventDefault();touch.thrusting=false;tBtn.classList.remove('active');});
+
+  // Yaw buttons
+  yL.addEventListener('touchstart',e=>{e.preventDefault();touch.yawLeft=true;yL.classList.add('active');},{passive:false});
+  yL.addEventListener('touchend',  e=>{e.preventDefault();touch.yawLeft=false;yL.classList.remove('active');});
+  yR.addEventListener('touchstart',e=>{e.preventDefault();touch.yawRight=true;yR.classList.add('active');},{passive:false});
+  yR.addEventListener('touchend',  e=>{e.preventDefault();touch.yawRight=false;yR.classList.remove('active');});
+}
 
 // ─── CRASH DETECTION ──────────────────────────────────────────────────────
-droneBody.addEventListener('collide', event => {
-  if (runEnded) return;
-  const v = event.contact.getImpactVelocityAlongNormal();
-  if (Math.abs(v) > CRASH_VEL_THR) endRun('crashed');
+droneBody.addEventListener('collide',event=>{
+  if(runEnded) return;
+  const v=event.contact.getImpactVelocityAlongNormal();
+  if(Math.abs(v)>CRASH_VEL_THR) endRun('crashed');
 });
 
 // ─── RESET ────────────────────────────────────────────────────────────────
-const START_Y   = 2.5;
-const camSmooth = new THREE.Vector3(0, 7, 14);
-const camLookAt = new THREE.Vector3(0, START_Y, 0);
+const START_Y=2.5;
+const camSmooth=new THREE.Vector3(0,7,14);
+const camLookAt=new THREE.Vector3(0,START_Y,0);
+const camVelSmooth=new THREE.Vector3();
 
-function applyUpgradesToPhysics() {
-  MAX_BATTERY    = getUpgradeValue('battery');
-  THRUST_POWER   = getUpgradeValue('thrust');
-  AUTO_STABILIZE = getUpgradeValue('stability');
-  CRASH_VEL_THR  = getUpgradeValue('chassis');
+function applyUpgradesToPhysics(){
+  MAX_BATTERY   =getUpgradeValue('battery');
+  THRUST_POWER  =getUpgradeValue('thrust');
+  AUTO_STABILIZE=getUpgradeValue('stability');
+  CRASH_VEL_THR =getUpgradeValue('chassis');
 }
 
-function resetDrone() {
+function resetDrone(){
   applyUpgradesToPhysics();
-  battery   = MAX_BATTERY;
-  gameState = 'flying';
-  runEnded  = false;
+  battery=MAX_BATTERY; gameState='flying'; runEnded=false;
+  document.getElementById('end-overlay').style.display='none';
+  document.getElementById('garage-overlay').style.display='none';
+  document.getElementById('batt-dead').style.display='none';
 
-  document.getElementById('end-overlay').style.display  = 'none';
-  document.getElementById('garage-overlay').style.display = 'none';
-  document.getElementById('batt-dead').style.display    = 'none';
-
-  droneBody.position.set(0, START_Y, 0);
-  droneBody.velocity.set(0, 0, 0);
-  droneBody.angularVelocity.set(0, 0, 0);
-  droneBody.quaternion.set(0, 0, 0, 1);
-  droneBody.force.set(0, 0, 0);
-  droneBody.torque.set(0, 0, 0);
+  droneBody.position.set(0,START_Y,0);
+  droneBody.velocity.set(0,0,0); droneBody.angularVelocity.set(0,0,0);
+  droneBody.quaternion.set(0,0,0,1); droneBody.force.set(0,0,0); droneBody.torque.set(0,0,0);
   droneBody.wakeUp();
 
-  const deckTop = START_Y + DY;
-  cargoBodies.forEach((b, i) => {
-    b.position.set(0, deckTop + CR + i*(CR*2+0.025), 0);
-    b.velocity.set(0, 0, 0);
-    b.angularVelocity.set(0, 0, 0);
-    b.quaternion.set(0, 0, 0, 1);
-    b.force.set(0, 0, 0);
-    b.torque.set(0, 0, 0);
-    b.wakeUp();
+  const deckTop=START_Y+DY;
+  cargoBodies.forEach((b,i)=>{
+    b.position.set(0,deckTop+CR+i*(CR*2+0.025),0);
+    b.velocity.set(0,0,0); b.angularVelocity.set(0,0,0);
+    b.quaternion.set(0,0,0,1); b.force.set(0,0,0); b.torque.set(0,0,0); b.wakeUp();
   });
 
-  camSmooth.set(0, 7, 14);
-  camLookAt.set(0, START_Y, 0);
+  camSmooth.set(0,7,14); camLookAt.set(0,START_Y,0); camVelSmooth.set(0,0,0);
 }
 
-function doReset() {
-  if (document.getElementById('garage-overlay').style.display === 'flex') return;
+function doReset(){
+  if(document.getElementById('garage-overlay').style.display==='flex') return;
   resetDrone();
 }
 
 // ─── CARGO COUNT ──────────────────────────────────────────────────────────
-function countCargo() {
-  const pos = droneBody.position;
-  let n = 0;
-  cargoBodies.forEach(b => {
-    const dy = b.position.y - pos.y;
-    const dx = Math.abs(b.position.x - pos.x);
-    const dz = Math.abs(b.position.z - pos.z);
-    if (dy > -0.5 && dy < 2.5 && dx < DX+CR+0.2 && dz < DZ+CR+0.2) n++;
+function countCargo(){
+  const pos=droneBody.position; let n=0;
+  cargoBodies.forEach(b=>{
+    const dy=b.position.y-pos.y, dx=Math.abs(b.position.x-pos.x), dz=Math.abs(b.position.z-pos.z);
+    if(dy>-0.5&&dy<2.5&&dx<DX+CR+0.2&&dz<DZ+CR+0.2) n++;
   });
   return n;
 }
 
-// ─── PAYOUT MATRIX ────────────────────────────────────────────────────────
-function calcPayout(reason, distM, cargo) {
-  const dist = Number(distM);
-
-  if (reason === 'crashed') {
-    return { scenario: 'VIOLENT CRASH', distCoins: 0, cargoCoins: 0, finishCoins: 0, multiplier: 1.0, earned: PITY_COINS };
+// ─── PAYOUT ───────────────────────────────────────────────────────────────
+function calcPayout(reason,distM,cargo){
+  const dist=Number(distM);
+  if(reason==='crashed') return {scenario:'VIOLENT CRASH',distCoins:0,cargoCoins:0,finishCoins:0,multiplier:1.0,earned:PITY_COINS};
+  if(reason==='finished'){
+    if(cargo===0) return {scenario:'DELIVERY FEE',distCoins:0,cargoCoins:0,finishCoins:75,multiplier:1.0,earned:75};
+    const distCoins=Math.floor(dist*COINS_PER_METER),cargoCoins=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
+    return {scenario:cargo===3?'PERFECT DELIVERY':'PARTIAL DELIVERY',distCoins,cargoCoins,finishCoins:FINISH_BONUS,multiplier:mult,earned:Math.floor((distCoins+FINISH_BONUS+cargoCoins)*mult)};
   }
-
-  if (reason === 'finished') {
-    if (cargo === 0) {
-      return { scenario: 'DELIVERY FEE', distCoins: 0, cargoCoins: 0, finishCoins: 75, multiplier: 1.0, earned: 75 };
-    }
-    const distCoins  = Math.floor(dist * COINS_PER_METER);
-    const cargoCoins = cargo * CARGO_BONUS_PER_BOX;
-    const mult       = cargo === 3 ? FULL_CARGO_MULTIPLIER : 1.0;
-    const earned     = Math.floor((distCoins + FINISH_BONUS + cargoCoins) * mult);
-    return {
-      scenario:    cargo === 3 ? 'PERFECT DELIVERY' : 'PARTIAL DELIVERY',
-      distCoins, cargoCoins, finishCoins: FINISH_BONUS, multiplier: mult, earned
-    };
-  }
-
-  const distCoins  = Math.floor(dist * COINS_PER_METER * SALVAGE_DIST_MULT);
-  const cargoCoins = cargo * CARGO_BONUS_PER_BOX;
-  const mult       = cargo === 3 ? FULL_CARGO_MULTIPLIER : 1.0;
-  const earned     = Math.max(PITY_COINS, Math.floor((distCoins + cargoCoins) * mult));
-  return {
-    scenario:    cargo > 0 ? 'SALVAGE RUN' : 'FORCED LANDING',
-    distCoins, cargoCoins, finishCoins: 0, multiplier: mult, earned
-  };
+  const distCoins=Math.floor(dist*COINS_PER_METER*SALVAGE_DIST_MULT),cargoCoins=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
+  return {scenario:cargo>0?'SALVAGE RUN':'FORCED LANDING',distCoins,cargoCoins,finishCoins:0,multiplier:mult,earned:Math.max(PITY_COINS,Math.floor((distCoins+cargoCoins)*mult))};
 }
 
-// ─── END-RUN HANDLER ──────────────────────────────────────────────────────
-function endRun(reason) {
-  if (runEnded) return;
-  runEnded  = true;
-  gameState = reason;
-  document.getElementById('batt-dead').style.display = 'none';
+function endRun(reason){
+  if(runEnded) return;
+  runEnded=true; gameState=reason;
+  document.getElementById('batt-dead').style.display='none';
+  const distM=Math.max(0,-droneBody.position.z).toFixed(0),cargo=countCargo(),payout=calcPayout(reason,distM,cargo);
+  totalCoins+=payout.earned; saveAll();
 
-  const distM  = Math.max(0, -droneBody.position.z).toFixed(0);
-  const cargo  = countCargo();
-  const payout = calcPayout(reason, distM, cargo);
+  const titleMap={finished:'✓ FINISH LINE',crashed:'✕ WRECKAGE',landed_safe:'▼ BATTERY DEAD'};
+  const colorMap={finished:'#00ff88',crashed:'#ff3300',landed_safe:'#ffaa00'};
+  document.getElementById('end-title').textContent=titleMap[reason]||'RUN ENDED';
+  document.getElementById('end-title').style.color=colorMap[reason]||'#fff';
+  document.getElementById('end-scenario').textContent=payout.scenario;
 
-  totalCoins += payout.earned;
-  saveAll();
-
-  const titleMap = { finished: '✓ FINISH LINE', crashed: '✕ WRECKAGE', landed_safe: '▼ BATTERY DEAD' };
-  const colorMap = { finished: '#00ff88', crashed: '#ff3300', landed_safe: '#ffaa00' };
-
-  document.getElementById('end-title').textContent    = titleMap[reason] || 'RUN ENDED';
-  document.getElementById('end-title').style.color    = colorMap[reason] || '#fff';
-  document.getElementById('end-scenario').textContent = payout.scenario;
-
-  const fmt = n => (n > 0 ? '+' : '') + n + ' ⬡';
-  document.getElementById('pv-dist').textContent        = fmt(payout.distCoins);
-  document.getElementById('pv-cargo-count').textContent = cargo;
-  document.getElementById('pv-cargo').textContent       = fmt(payout.cargoCoins);
-  document.getElementById('pv-finish').textContent      = fmt(payout.finishCoins);
-  document.getElementById('pv-mult').textContent        = '×' + payout.multiplier.toFixed(1);
-  document.getElementById('pv-total').textContent       = payout.earned + ' ⬡';
-  document.getElementById('pv-bank').textContent        = totalCoins.toLocaleString();
-
-  document.getElementById('pr-mult').style.display   = payout.multiplier !== 1.0 ? 'flex' : 'none';
-  document.getElementById('pr-finish').style.display = payout.finishCoins > 0    ? 'flex' : 'none';
-
-  document.getElementById('end-overlay').style.display = 'flex';
+  const fmt=n=>(n>0?'+':'')+n+' ⬡';
+  document.getElementById('pv-dist').textContent       =fmt(payout.distCoins);
+  document.getElementById('pv-cargo-count').textContent=cargo;
+  document.getElementById('pv-cargo').textContent      =fmt(payout.cargoCoins);
+  document.getElementById('pv-finish').textContent     =fmt(payout.finishCoins);
+  document.getElementById('pv-mult').textContent       ='×'+payout.multiplier.toFixed(1);
+  document.getElementById('pv-total').textContent      =payout.earned+' ⬡';
+  document.getElementById('pv-bank').textContent       =totalCoins.toLocaleString();
+  document.getElementById('pr-mult').style.display  =payout.multiplier!==1.0?'flex':'none';
+  document.getElementById('pr-finish').style.display=payout.finishCoins>0?'flex':'none';
+  document.getElementById('end-overlay').style.display='flex';
 }
 
-// ─── GARAGE UI ────────────────────────────────────────────────────────────
-function renderGarage() {
-  document.getElementById('gv-bank').textContent = totalCoins.toLocaleString();
-  const list = document.getElementById('upgrade-list');
-  list.innerHTML = '';
-
-  UPGRADES.forEach(u => {
-    const level   = upgradeLevels[u.id];
-    const maxLevel = u.values.length - 1;
-    const isMaxed  = level >= maxLevel;
-    const curVal   = u.values[level];
-    const nextVal  = isMaxed ? null : u.values[level + 1];
-    const cost     = isMaxed ? null : u.costs[level];
-    const canAfford = !isMaxed && totalCoins >= cost;
-
-    const card = document.createElement('div');
-    card.className = 'upgrade-card' + (isMaxed ? ' maxed' : '');
-
-    const pips = Array.from({ length: maxLevel }, (_, i) =>
-      `<div class="pip${i < level ? ' filled' + (isMaxed ? ' maxed' : '') : ''}"></div>`
-    ).join('');
-
-    card.innerHTML = `
+// ─── GARAGE ───────────────────────────────────────────────────────────────
+function renderGarage(){
+  document.getElementById('gv-bank').textContent=totalCoins.toLocaleString();
+  const list=document.getElementById('upgrade-list'); list.innerHTML='';
+  UPGRADES.forEach(u=>{
+    const level=upgradeLevels[u.id],maxLevel=u.values.length-1,isMaxed=level>=maxLevel;
+    const curVal=u.values[level],nextVal=isMaxed?null:u.values[level+1],cost=isMaxed?null:u.costs[level];
+    const canAfford=!isMaxed&&totalCoins>=cost;
+    const card=document.createElement('div'); card.className='upgrade-card'+(isMaxed?' maxed':'');
+    const pips=Array.from({length:maxLevel},(_,i)=>`<div class="pip${i<level?' filled'+(isMaxed?' maxed':''):''}"></div>`).join('');
+    card.innerHTML=`
       <div class="ug-top">
-        <div>
-          <div class="ug-name">${u.icon} ${u.name}</div>
-          <div class="ug-desc">${u.desc}</div>
-        </div>
+        <div><div class="ug-name">${u.icon} ${u.name}</div><div class="ug-desc">${u.desc}</div></div>
         <div class="ug-stat">
           <div class="ug-stat-cur">NOW: ${curVal}${u.unit}</div>
-          <div class="ug-stat-next ${isMaxed ? 'maxed-val' : ''}">
-            ${isMaxed ? '✓ MAX LEVEL' : `NEXT: ${nextVal}${u.unit}`}
-          </div>
+          <div class="ug-stat-next ${isMaxed?'maxed-val':''}">${isMaxed?'✓ MAX LEVEL':'NEXT: '+nextVal+u.unit}</div>
         </div>
       </div>
       <div class="ug-pips">${pips}</div>
       <div class="ug-bottom">
-        <div class="ug-cost ${!isMaxed && !canAfford ? 'cant-afford' : ''}">
-          ${isMaxed ? 'Fully upgraded' : `Cost: ${cost.toLocaleString()} ⬡`}
-        </div>
-        <button class="buy-btn ${isMaxed ? 'maxed-btn' : ''}"
-          ${isMaxed || !canAfford ? 'disabled' : ''}
-          data-id="${u.id}">
-          ${isMaxed ? '✓ MAXED' : 'UPGRADE'}
-        </button>
-      </div>
-    `;
-
+        <div class="ug-cost ${!isMaxed&&!canAfford?'cant-afford':''}">${isMaxed?'Fully upgraded':'Cost: '+cost.toLocaleString()+' ⬡'}</div>
+        <button class="buy-btn ${isMaxed?'maxed-btn':''}" ${isMaxed||!canAfford?'disabled':''} data-id="${u.id}">${isMaxed?'✓ MAXED':'UPGRADE'}</button>
+      </div>`;
     list.appendChild(card);
   });
-
-  list.querySelectorAll('.buy-btn:not(:disabled)').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id    = btn.dataset.id;
-      const u     = UPGRADES.find(x => x.id === id);
-      const level = upgradeLevels[id];
-      const cost  = u.costs[level];
-      if (totalCoins >= cost) {
-        totalCoins -= cost;
-        upgradeLevels[id]++;
-        saveAll();
-        renderGarage();
-      }
+  list.querySelectorAll('.buy-btn:not(:disabled)').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const u=UPGRADES.find(x=>x.id===btn.dataset.id),cost=u.costs[upgradeLevels[u.id]];
+      if(totalCoins>=cost){totalCoins-=cost;upgradeLevels[u.id]++;saveAll();renderGarage();}
     });
   });
 }
 
-function openGarage() {
-  document.getElementById('end-overlay').style.display    = 'none';
-  document.getElementById('garage-overlay').style.display = 'flex';
+function openGarage(){
+  document.getElementById('end-overlay').style.display='none';
+  document.getElementById('garage-overlay').style.display='flex';
   renderGarage();
 }
 
-// Wire up buttons
-document.getElementById('end-garage-btn').addEventListener('click', openGarage);
-document.getElementById('end-fly-btn').addEventListener('click',    () => resetDrone());
-document.getElementById('garage-fly-btn').addEventListener('click', () => resetDrone());
+document.getElementById('end-garage-btn').addEventListener('click',openGarage);
+document.getElementById('end-fly-btn').addEventListener('click',()=>resetDrone());
+document.getElementById('garage-fly-btn').addEventListener('click',()=>resetDrone());
 
 // ─── FLIGHT CONTROLLER ────────────────────────────────────────────────────
-const _upLocal   = new CANNON.Vec3(0, 1, 0);
-const _worldUp   = new CANNON.Vec3();
-const _pidCorr   = new CANNON.Vec3();
-const _thrustVec = new CANNON.Vec3();
-const _localTorq = new CANNON.Vec3();
+const _upLocal=new CANNON.Vec3(0,1,0),_worldUp=new CANNON.Vec3(),_pidCorr=new CANNON.Vec3();
+const _thrustVec=new CANNON.Vec3(),_localTorq=new CANNON.Vec3();
 
-function applyFlightForces() {
-  if (runEnded) return;
+let isThrusting = false; // track for particles
 
-  const battAlive = battery > 0;
-  const thrusting = K['Space'] && battAlive;
-  const pitchIn   = (+(K['KeyW']||K['ArrowUp']))    - (+(K['KeyS']||K['ArrowDown']));
-  const rollIn    = (+(K['KeyD']||K['ArrowRight'])) - (+(K['KeyA']||K['ArrowLeft']));
-  const yawIn     = (+K['KeyQ']) - (+K['KeyE']);
+function applyFlightForces(){
+  if(runEnded) return;
 
-  if (thrusting) {
-    droneBody.quaternion.vmult(_upLocal, _thrustVec);
-    _thrustVec.scale(THRUST_POWER, _thrustVec);
-    droneBody.applyForce(_thrustVec, droneBody.position);
-    battery = Math.max(0, battery - BATTERY_DRAIN * FIXED_DT);
-    if (battery <= 0) {
-      gameState = 'battery_dead';
-      document.getElementById('batt-dead').style.display = 'block';
-    }
+  const battAlive=battery>0;
+
+  // Combine keyboard + touch
+  const spaceDown = K['Space'] || touch.thrusting;
+  const thrusting = spaceDown && battAlive;
+  isThrusting = thrusting;
+
+  const pitchIn=(+(K['KeyW']||K['ArrowUp']))-(+(K['KeyS']||K['ArrowDown'])) + (-touch.jDY);
+  const rollIn =(+(K['KeyD']||K['ArrowRight']))-(+(K['KeyA']||K['ArrowLeft'])) + touch.jDX;
+  const yawIn  =(+K['KeyQ']||+touch.yawLeft)-(+K['KeyE']||+touch.yawRight);
+
+  const pitchClamped=Math.max(-1,Math.min(1,pitchIn));
+  const rollClamped =Math.max(-1,Math.min(1,rollIn));
+
+  if(thrusting){
+    droneBody.quaternion.vmult(_upLocal,_thrustVec);
+    _thrustVec.scale(THRUST_POWER,_thrustVec);
+    droneBody.applyForce(_thrustVec,droneBody.position);
+    battery=Math.max(0,battery-BATTERY_DRAIN*FIXED_DT);
+    if(battery<=0){gameState='battery_dead';document.getElementById('batt-dead').style.display='block';}
   }
 
-  _localTorq.set(pitchIn * TORQUE_POWER, yawIn * YAW_POWER, rollIn * TORQUE_POWER);
-  if (pitchIn !== 0 || rollIn !== 0 || yawIn !== 0) droneBody.applyLocalTorque(_localTorq);
+  _localTorq.set(pitchClamped*TORQUE_POWER, yawIn*YAW_POWER, rollClamped*TORQUE_POWER);
+  if(pitchClamped!==0||rollClamped!==0||yawIn!==0) droneBody.applyLocalTorque(_localTorq);
 
-  droneBody.quaternion.vmult(_upLocal, _worldUp);
-  _worldUp.cross(_upLocal, _pidCorr);
-
-  const pidP = AUTO_STABILIZE * 22;
-  const pidD = AUTO_STABILIZE * 7;
-  if (pitchIn === 0) droneBody.torque.x += _pidCorr.x * pidP - droneBody.angularVelocity.x * pidD;
-  if (rollIn  === 0) droneBody.torque.z += _pidCorr.z * pidP - droneBody.angularVelocity.z * pidD;
+  droneBody.quaternion.vmult(_upLocal,_worldUp);
+  _worldUp.cross(_upLocal,_pidCorr);
+  const pidP=AUTO_STABILIZE*22, pidD=AUTO_STABILIZE*7;
+  if(Math.abs(pitchClamped)<0.1) droneBody.torque.x+=_pidCorr.x*pidP-droneBody.angularVelocity.x*pidD;
+  if(Math.abs(rollClamped) <0.1) droneBody.torque.z+=_pidCorr.z*pidP-droneBody.angularVelocity.z*pidD;
 }
 
 // ─── GAME-STATE CHECKS ────────────────────────────────────────────────────
-function checkGameState() {
-  if (runEnded) return;
-  if (droneBody.position.z <= FINISH_Z) { endRun('finished'); return; }
-  if (gameState === 'battery_dead') {
-    const spd = droneBody.velocity.length();
-    if (droneBody.position.y <= DY + 0.3 && spd < 4.0) endRun('landed_safe');
+function checkGameState(){
+  if(runEnded) return;
+  if(droneBody.position.z<=FINISH_Z){endRun('finished');return;}
+  if(gameState==='battery_dead'){
+    const spd=droneBody.velocity.length();
+    if(droneBody.position.y<=DY+0.3&&spd<4.0) endRun('landed_safe');
   }
 }
 
-// ─── SYNC MESHES ──────────────────────────────────────────────────────────
-const _rotorWP = ARM_DIRS.map(() => new THREE.Vector3());
+// ─── SYNC MESHES + EMIT PARTICLES ─────────────────────────────────────────
+const _rotorWP=ARM_DIRS.map(()=>new THREE.Vector3());
+let particleTimer=0;
 
-function syncMeshes() {
+function syncMeshes(dt){
   droneGroup.position.copy(droneBody.position);
   droneGroup.quaternion.copy(droneBody.quaternion);
-  cargoMeshes.forEach((m, i) => {
-    m.position.copy(cargoBodies[i].position);
-    m.quaternion.copy(cargoBodies[i].quaternion);
-  });
-  const spin = K['Space'] && battery > 0 ? 0.38 : 0.07;
-  rotorDiscs.forEach((r, i) => { r.rotation.y += (i%2 ? 1 : -1) * spin; });
-  ARM_DIRS.forEach((dir, i) => {
+  cargoMeshes.forEach((m,i)=>{ m.position.copy(cargoBodies[i].position); m.quaternion.copy(cargoBodies[i].quaternion); });
+
+  const spin=isThrusting?0.42:0.07;
+  rotorDiscs.forEach((r,i)=>{ r.rotation.y+=(i%2?1:-1)*spin; });
+
+  ARM_DIRS.forEach((dir,i)=>{
     _rotorWP[i].copy(dir).setY(0.15).applyQuaternion(droneGroup.quaternion).add(droneGroup.position);
     rotorLights[i].position.copy(_rotorWP[i]);
-    rotorLights[i].intensity = (K['Space'] && battery > 0) ? 2.2 : 0.4;
+    rotorLights[i].intensity=isThrusting?2.8:0.5;
+    rotorLights[i].color.setHex(isThrusting?0x00ffaa:0x00cc88);
   });
+
+  // Emit particles from each rotor
+  particleTimer+=dt;
+  const emitRate=isThrusting?0.018:0.06; // seconds per particle per rotor
+  if(particleTimer>=emitRate){
+    particleTimer=0;
+    ARM_DIRS.forEach((_,i)=>{ emitEngineParticle(_rotorWP[i].x,_rotorWP[i].y,_rotorWP[i].z,isThrusting); });
+  }
 }
 
-// ─── CAMERA ───────────────────────────────────────────────────────────────
-let camYaw = 0;
+// ─── CAMERA (with velocity look-ahead smoothing) ──────────────────────────
+let camYaw=0;
 
-function updateCamera() {
-  const q  = droneBody.quaternion;
-  const sY = 2*(q.w*q.y + q.z*q.x);
-  const cY = 1 - 2*(q.x*q.x + q.y*q.y);
-  camYaw  += (Math.atan2(sY, cY) - camYaw) * 0.04;
+function updateCamera(dt){
+  const q=droneBody.quaternion;
+  const sY=2*(q.w*q.y+q.z*q.x), cY=1-2*(q.x*q.x+q.y*q.y);
+  camYaw+=(Math.atan2(sY,cY)-camYaw)*0.04;
 
-  const offset = new THREE.Vector3(0, 4.5, 9).applyEuler(new THREE.Euler(0, camYaw, 0));
-  const dPos   = new THREE.Vector3(droneBody.position.x, droneBody.position.y, droneBody.position.z);
-  camSmooth.lerp(dPos.clone().add(offset), 0.06);
-  camLookAt.lerp(dPos.clone().setY(dPos.y + 0.3), 0.10);
+  const vel=droneBody.velocity;
+  // Smooth the velocity for look-ahead
+  camVelSmooth.lerp(new THREE.Vector3(vel.x,vel.y,vel.z),0.08);
+
+  // Base offset behind/above drone
+  const offset=new THREE.Vector3(0,4.8,10).applyEuler(new THREE.Euler(0,camYaw,0));
+  // Velocity look-ahead: shift target slightly ahead of motion
+  const lookAhead=camVelSmooth.clone().multiplyScalar(0.18);
+  lookAhead.y=0; // don't tilt camera vertically for vertical speed
+
+  const dPos=new THREE.Vector3(droneBody.position.x,droneBody.position.y,droneBody.position.z);
+  const targetCamPos=dPos.clone().add(offset);
+  const targetLookAt=dPos.clone().add(lookAhead).setY(dPos.y+0.4);
+
+  camSmooth.lerp(targetCamPos,0.055);
+  camLookAt.lerp(targetLookAt,0.09);
   camera.position.copy(camSmooth);
   camera.lookAt(camLookAt);
 }
 
 // ─── HUD ──────────────────────────────────────────────────────────────────
-const elAlt    = document.getElementById('v-alt');
-const elTilt   = document.getElementById('v-tilt');
-const elSpd    = document.getElementById('v-spd');
-const elCargo  = document.getElementById('v-cargo');
-const elDist   = document.getElementById('v-dist');
-const elRemain = document.getElementById('v-remain');
-const elCoins  = document.getElementById('v-coins');
-const battFill = document.getElementById('batt-fill');
-const battPct  = document.getElementById('batt-pct');
-const progFill = document.getElementById('prog-fill');
-const tiltCtx  = document.getElementById('tilt-canvas').getContext('2d');
+const elAlt=document.getElementById('v-alt'),elTilt=document.getElementById('v-tilt');
+const elSpd=document.getElementById('v-spd'),elCargo=document.getElementById('v-cargo');
+const elDist=document.getElementById('v-dist'),elRemain=document.getElementById('v-remain');
+const elCoins=document.getElementById('v-coins'),battFill=document.getElementById('batt-fill');
+const battPct=document.getElementById('batt-pct'),progFill=document.getElementById('prog-fill');
+const tiltCanvas=document.getElementById('tilt-canvas');
+const tiltCtx=tiltCanvas?tiltCanvas.getContext('2d'):null;
 
-function updateHUD() {
-  const pos = droneBody.position;
-  const vel = droneBody.velocity;
-
-  elAlt.textContent  = Math.max(0, pos.y - DY).toFixed(2);
-  elSpd.textContent  = Math.sqrt(vel.x*vel.x + vel.y*vel.y + vel.z*vel.z).toFixed(2);
-
-  droneBody.quaternion.vmult(_upLocal, _worldUp);
-  const tiltRad = Math.acos(Math.max(-1, Math.min(1, _worldUp.y)));
-  elTilt.textContent = (tiltRad * 180 / Math.PI).toFixed(1);
-
-  const onBoard = countCargo();
-  elCargo.textContent = `${onBoard} / 3`;
-
-  const dist   = Math.max(0, -pos.z);
-  const remain = Math.max(0, 500 + pos.z);
-  elDist.textContent   = dist.toFixed(0);
-  elRemain.textContent = remain.toFixed(0);
-  progFill.style.width = Math.min(100, dist / 5) + '%';
-
-  elCoins.textContent = totalCoins.toLocaleString();
-
-  const pct = (battery / MAX_BATTERY) * 100;
-  battFill.style.width      = pct + '%';
-  battFill.style.background = pct > 50 ? '#00ff88' : pct > 20 ? '#ffaa00' : '#ff3300';
-  battPct.textContent       = pct.toFixed(0) + '%';
-
-  drawHorizon(_worldUp.x, -_worldUp.z);
+function updateHUD(){
+  const pos=droneBody.position, vel=droneBody.velocity;
+  elAlt.textContent=Math.max(0,pos.y-DY).toFixed(2);
+  elSpd.textContent=Math.sqrt(vel.x*vel.x+vel.y*vel.y+vel.z*vel.z).toFixed(2);
+  droneBody.quaternion.vmult(_upLocal,_worldUp);
+  const tiltRad=Math.acos(Math.max(-1,Math.min(1,_worldUp.y)));
+  elTilt.textContent=(tiltRad*180/Math.PI).toFixed(1);
+  const onBoard=countCargo(); elCargo.textContent=`${onBoard} / 3`;
+  const dist=Math.max(0,-pos.z), remain=Math.max(0,500+pos.z);
+  elDist.textContent=dist.toFixed(0); elRemain.textContent=remain.toFixed(0);
+  progFill.style.width=Math.min(100,dist/5)+'%';
+  elCoins.textContent=totalCoins.toLocaleString();
+  const pct=(battery/MAX_BATTERY)*100;
+  battFill.style.width=pct+'%';
+  battFill.style.background=pct>50?'#00ff88':pct>20?'#ffaa00':'#ff3300';
+  battPct.textContent=pct.toFixed(0)+'%';
+  if(tiltCtx) drawHorizon(_worldUp.x,-_worldUp.z);
 }
 
-function drawHorizon(roll, pitch) {
-  tiltCtx.clearRect(0, 0, 90, 90);
-  tiltCtx.save();
-  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.clip();
-  tiltCtx.save();
-  tiltCtx.translate(45, 45);
-  tiltCtx.rotate(-Math.asin(Math.max(-1, Math.min(1, roll))));
-  const pOff = pitch * 48;
-  tiltCtx.fillStyle = '#001844'; tiltCtx.fillRect(-45, -45, 90, 45+pOff);
-  tiltCtx.fillStyle = '#0d2208'; tiltCtx.fillRect(-45, pOff, 90, 45-pOff);
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.5)'; tiltCtx.lineWidth = 1.5;
-  tiltCtx.beginPath(); tiltCtx.moveTo(-43, pOff); tiltCtx.lineTo(43, pOff); tiltCtx.stroke();
+function drawHorizon(roll,pitch){
+  tiltCtx.clearRect(0,0,90,90);
+  tiltCtx.save(); tiltCtx.beginPath(); tiltCtx.arc(45,45,43,0,Math.PI*2); tiltCtx.clip();
+  tiltCtx.save(); tiltCtx.translate(45,45); tiltCtx.rotate(-Math.asin(Math.max(-1,Math.min(1,roll))));
+  const pOff=pitch*48;
+  tiltCtx.fillStyle='#001844'; tiltCtx.fillRect(-45,-45,90,45+pOff);
+  tiltCtx.fillStyle='#0d2208'; tiltCtx.fillRect(-45,pOff,90,45-pOff);
+  tiltCtx.strokeStyle='rgba(255,255,255,0.5)'; tiltCtx.lineWidth=1.5;
+  tiltCtx.beginPath(); tiltCtx.moveTo(-43,pOff); tiltCtx.lineTo(43,pOff); tiltCtx.stroke();
   tiltCtx.restore(); tiltCtx.restore();
-  tiltCtx.strokeStyle = 'rgba(0,255,136,0.28)'; tiltCtx.lineWidth = 1;
-  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.stroke();
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.55)'; tiltCtx.lineWidth = 1;
-  tiltCtx.beginPath();
-  tiltCtx.moveTo(34,45); tiltCtx.lineTo(56,45);
-  tiltCtx.moveTo(45,34); tiltCtx.lineTo(45,56);
-  tiltCtx.stroke();
-  tiltCtx.fillStyle = '#fff';
-  tiltCtx.beginPath(); tiltCtx.arc(45, 45, 2, 0, Math.PI*2); tiltCtx.fill();
+  tiltCtx.strokeStyle='rgba(0,255,136,0.28)'; tiltCtx.lineWidth=1;
+  tiltCtx.beginPath(); tiltCtx.arc(45,45,43,0,Math.PI*2); tiltCtx.stroke();
+  tiltCtx.strokeStyle='rgba(255,255,255,0.55)'; tiltCtx.lineWidth=1;
+  tiltCtx.beginPath(); tiltCtx.moveTo(34,45); tiltCtx.lineTo(56,45); tiltCtx.moveTo(45,34); tiltCtx.lineTo(45,56); tiltCtx.stroke();
+  tiltCtx.fillStyle='#fff'; tiltCtx.beginPath(); tiltCtx.arc(45,45,2,0,Math.PI*2); tiltCtx.fill();
 }
 
 // ─── MAIN LOOP ────────────────────────────────────────────────────────────
-const FIXED_DT  = 1 / 60;
-let   accumulator = 0;
-let   lastTime    = performance.now();
+const FIXED_DT=1/60;
+let accumulator=0, lastTime=performance.now();
 
-function loop(now) {
+function loop(now){
   requestAnimationFrame(loop);
-  const dt = Math.min((now - lastTime) / 1000, 0.05);
-  lastTime = now;
-  accumulator += dt;
+  const dt=Math.min((now-lastTime)/1000,0.05);
+  lastTime=now;
+  accumulator+=dt;
 
-  while (accumulator >= FIXED_DT) {
+  while(accumulator>=FIXED_DT){
     applyFlightForces();
     world.step(FIXED_DT);
     checkGameState();
-    accumulator -= FIXED_DT;
+    accumulator-=FIXED_DT;
   }
 
-  syncMeshes();
-  updateCamera();
+  syncMeshes(dt);
+  updateParticles(dt);
+  updateCamera(dt);
   updateHUD();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────

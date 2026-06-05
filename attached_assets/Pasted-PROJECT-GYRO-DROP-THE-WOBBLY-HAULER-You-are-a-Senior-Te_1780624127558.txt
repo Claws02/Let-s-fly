@@ -1,0 +1,43 @@
+PROJECT: GYRO DROP - THE WOBBLY HAULER
+You are a Senior Technical Game Designer and Unity/Three.js Developer. Your task is to build a complete, polished, web-ready 3D physics game called "Gyro Drop".
+This is not a standard driving game. It is a physics-based "Incremental Launcher" with a unique fail state: the player is flying a cobbled-together, multi-rotor drone carrying an unsecured, highly unstable payload (a stack of physics boxes).
+1. CORE ARCHITECTURE & STACK
+ Engine: Three.js for 3D rendering.
+ Physics Engine: Cannon-es (or equivalent robust 3D physics solver).
+ UI/Styling: HTML5 Canvas overlaid with DOM elements using Tailwind CSS.
+ Delivery Format: A fully self-contained web application (HTML/JS/CSS) that can run smoothly on desktop browsers and mobile devices.
+2. THE GAMEPLAY LOOP (The Incremental Launcher)
+1. Launch: The player starts at the beginning of a 3D procedural canyon.
+2. Fly & Balance: Using main thrust (lift) and pitch/roll (directional), the player navigates the canyon. The physics boxes resting on the drone's deck will slide, tip, and fall off if the player maneuvers too sharply.
+3. End State: The run ends when the player reaches the finish line (win), crashes violently (lose), or runs out of battery and lands (controlled crash).
+4. Reward: The player earns coins based on distance traveled AND a massive bonus for how much cargo is still on the deck.
+5. Upgrade (The Meta Game): The player spends coins in the "Garage" to upgrade the drone's physics properties, allowing them to fly further and more stably on the next run.
+3. TECHNICAL SPECIFICATIONS & PHYSICS TUNING
+This is the most critical part of the game. Do not fake the physics.
+ The Drone: A rigid body box. It must have a realistic mass and rotational inertia.
+ The Cargo: 3 distinct rigid body boxes stacked on top of each other, resting on the drone.
+ Crucial Setup: They are NOT parented to the drone. They rely entirely on Cannon-es contact materials (Friction/Restitution). The drone deck should have a tiny, invisible collision "lip" to prevent instant sliding, forcing the payload to tip over instead of just sliding off like ice.
+ Flight Controller Setup:
+ Thrust (Lift): Applied as a localized force pushing UP relative to the drone's current rotation (Quaternions).
+ Pitch/Roll: Applied as torque.
+ Auto-Stabilizer (PID Loop): When the player releases the directional controls, the script must calculate the drone's current Euler angles and apply a counter-torque to automatically level the platform. Upgrading this stat makes the counter-torque stronger and faster.
+ Battery Drain: Thrusting drains battery over time.
+4. THE PAYOUT MATRIX (Reward Logic)
+The game economy is based on decoupling "winning" from "keeping the cargo." Implement this exact logic at the end of a run:
+ Finish Line Reached + 100% Cargo: Massive Coin Payout. Unlocks next tier.
+ Finish Line Reached + 0 Cargo: Minimal "Delivery Fee" payout.
+ Battery Died + Controlled Landing + 100% Cargo: High "Salvage" payout based on distance traveled. (This is the main grinding loop).
+ Violent Crash (Velocity > threshold): Drone destroyed. 0 Cargo bonus. Pity coins only.
+5. THE GARAGE (Upgrade Tree)
+Between runs, display a UI menu where the player can spend their total coins on these specific variables. The script must save these values (using LocalStorage) and apply them to the physics engine on the next run.
+1. High-Density Batteries: Increases the ⁠MAX_BATTERY⁠ float (Increases total flight time).
+2. Motor KV Rating (Thrust): Increases the ⁠THRUST_POWER⁠ float. Allows the drone to recover altitude faster and carry heavier future payloads.
+3. Gyroscope Tuning (Stability): Increases the ⁠AUTO_STABILIZE⁠ multiplier in the PID loop. Makes the drone snap back to a level position much faster.
+4. Reinforced Chassis: Increases the crash velocity threshold. Allows the player to slam into the ground harder without triggering a "Violent Crash" fail state.
+6. DEVELOPMENT PLAN & INSTRUCTIONS
+Act as the lead developer. Execute the build in the following sequence. Ask for my confirmation before moving to the next step.
+ Step 1: The Physics Core. Build the Three.js and Cannon-es boilerplate. Render the drone, the stack of 3 boxes, the ground, and implement the thrust/pitch/roll controls with the Auto-Stabilizer logic. Prove the wobble feels fun.
+ Step 2: The Procedural Level. Build a script to generate the canyon walls, obstacles, and place the finish line at ⁠Z = -500⁠. Implement the Battery drain logic.
+ Step 3: The Telemetry & Payouts. Build the UI overlay (Battery bar, Cargo count, Distance traveled). Build the End Screen that calculates the Payout Matrix exactly as specified.
+ Step 4: The Meta Game. Build the Garage UI. Implement LocalStorage saving for total coins and the 4 upgrade paths. Ensure the upgraded variables hook directly back into the Cannon-es physics tuning.
+ Step 5: Polish. Add engine glow particles, lighting adjustments, camera smoothing, and responsive mobile touch controls (Virtual Joystick + Thrust Button).

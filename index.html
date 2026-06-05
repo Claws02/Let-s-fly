@@ -29,7 +29,7 @@
   }
   .panel span { color: #fff; font-weight: bold; }
 
-  /* ── Coin bank display (top-right during flight) ── */
+  /* ── Coin bank display ── */
   #coins-hud {
     position: absolute; top: 16px; right: 16px;
     background: rgba(0,8,20,0.78);
@@ -102,10 +102,8 @@
     text-shadow: 0 0 30px currentColor;
   }
   #end-scenario {
-    font-size: 13px;
-    letter-spacing: 3px;
-    opacity: 0.5;
-    margin-bottom: 28px;
+    font-size: 13px; letter-spacing: 3px;
+    opacity: 0.5; margin-bottom: 28px;
     text-transform: uppercase;
   }
 
@@ -116,7 +114,7 @@
     border-radius: 10px;
     padding: 22px 36px;
     min-width: 340px;
-    margin-bottom: 22px;
+    margin-bottom: 16px;
   }
   .pay-row {
     display: flex;
@@ -132,47 +130,51 @@
   .pay-row .pay-val   { text-align: right; font-weight: bold; color: #fff; }
   .pay-row.multiplier .pay-val { color: #00aaff; }
   .pay-row.total-row {
-    margin-top: 10px;
-    padding-top: 12px;
+    margin-top: 10px; padding-top: 12px;
     border-top: 1px solid rgba(255,255,255,0.2);
     border-bottom: none;
-    font-size: 17px;
-    color: #fff;
+    font-size: 17px; color: #fff;
   }
   .pay-row.total-row .pay-val { font-size: 22px; color: #ffcc00; text-shadow: 0 0 12px #ffcc00; }
 
-  /* Bank line below card */
   #bank-line {
-    font-size: 13px;
-    color: rgba(255,200,0,0.6);
-    letter-spacing: 1px;
-    margin-bottom: 28px;
+    font-size: 13px; color: rgba(255,200,0,0.6);
+    letter-spacing: 1px; margin-bottom: 20px;
   }
   #bank-line span { color: #ffcc00; font-weight: bold; }
 
-  #end-hint  { font-size: 13px; opacity: 0.4; animation: blink 1.4s ease-in-out infinite; }
+  /* End-screen action buttons */
+  .end-btns { display: flex; gap: 12px; margin-bottom: 0; }
+  .end-btn {
+    padding: 11px 28px;
+    border: none; border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px; font-weight: bold;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  .end-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .end-btn:active { transform: translateY(0); }
+  .btn-fly    { background: #00ff88; color: #000; }
+  .btn-garage { background: #ffcc00; color: #000; }
 
-  /* ── Progress bar to finish (top centre) ── */
+  #end-hint  { font-size: 11px; opacity: 0.3; margin-top: 14px; animation: blink 1.4s ease-in-out infinite; }
+
+  /* ── Progress bar ── */
   #progress-wrap {
     position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
-    text-align: center;
-    color: rgba(255,255,255,0.35);
-    font-size: 10px;
-    letter-spacing: 2px;
-    min-width: 180px;
+    text-align: center; color: rgba(255,255,255,0.35);
+    font-size: 10px; letter-spacing: 2px; min-width: 180px;
   }
   #prog-track {
     width: 180px; height: 4px;
     background: rgba(255,255,255,0.07);
-    border-radius: 2px;
-    margin: 5px auto 0;
-    overflow: hidden;
+    border-radius: 2px; margin: 5px auto 0; overflow: hidden;
   }
   #prog-fill {
     height: 100%; width: 0%;
     background: rgba(0,255,136,0.5);
-    border-radius: 2px;
-    transition: width 0.2s;
+    border-radius: 2px; transition: width 0.2s;
   }
 
   /* ── Misc HUD ── */
@@ -193,13 +195,138 @@
   }
 
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     GARAGE OVERLAY
+  ═══════════════════════════════════════════════════════════════════════ */
+  #garage-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    align-items: flex-start; justify-content: center;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(14px);
+    pointer-events: all;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    overflow-y: auto;
+    padding: 40px 20px 60px;
+  }
+  #garage-inner {
+    width: 100%; max-width: 640px;
+    animation: slideUp 0.25s ease-out;
+  }
+  #garage-header {
+    text-align: center; margin-bottom: 32px;
+  }
+  #garage-title {
+    font-size: 38px; font-weight: bold; letter-spacing: 4px;
+    color: #ffcc00; text-shadow: 0 0 24px rgba(255,200,0,0.6);
+    margin-bottom: 6px;
+  }
+  #garage-subtitle {
+    font-size: 12px; letter-spacing: 2px; opacity: 0.4;
+    text-transform: uppercase;
+  }
+  #garage-bank {
+    font-size: 18px; color: #ffcc00; margin-top: 14px;
+    text-shadow: 0 0 10px rgba(255,200,0,0.4);
+  }
+  #garage-bank span { font-size: 26px; font-weight: bold; }
+
+  /* Upgrade cards */
+  .upgrade-card {
+    background: rgba(10,16,30,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .upgrade-card:hover { border-color: rgba(255,200,0,0.3); }
+  .upgrade-card.maxed { border-color: rgba(0,255,136,0.3); opacity: 0.75; }
+
+  .ug-top {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; margin-bottom: 12px;
+  }
+  .ug-name {
+    font-size: 15px; font-weight: bold; color: #fff;
+    letter-spacing: 1px; margin-bottom: 3px;
+  }
+  .ug-desc { font-size: 11px; color: rgba(255,255,255,0.4); max-width: 340px; }
+  .ug-stat {
+    text-align: right; flex-shrink: 0; margin-left: 16px;
+  }
+  .ug-stat-cur  { font-size: 11px; color: rgba(255,255,255,0.35); }
+  .ug-stat-next { font-size: 13px; color: #00ff88; font-weight: bold; }
+  .ug-stat-next.maxed-val { color: rgba(0,255,136,0.5); font-size: 11px; }
+
+  /* Level pips */
+  .ug-pips {
+    display: flex; gap: 5px; align-items: center; margin-bottom: 12px;
+  }
+  .pip {
+    width: 28px; height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.1);
+    transition: background 0.2s;
+  }
+  .pip.filled { background: #ffcc00; }
+  .pip.filled.maxed { background: #00ff88; }
+
+  /* Buy button */
+  .ug-bottom {
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .ug-cost { font-size: 12px; color: rgba(255,200,0,0.7); }
+  .ug-cost.cant-afford { color: rgba(255,60,60,0.7); }
+  .buy-btn {
+    padding: 8px 22px;
+    border: 1px solid rgba(255,200,0,0.5);
+    border-radius: 5px;
+    background: transparent;
+    color: #ffcc00;
+    font-family: 'Courier New', monospace;
+    font-size: 12px; font-weight: bold;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+  }
+  .buy-btn:hover:not(:disabled) {
+    background: #ffcc00; color: #000;
+    transform: translateY(-1px);
+  }
+  .buy-btn:active:not(:disabled) { transform: translateY(0); }
+  .buy-btn:disabled {
+    opacity: 0.35; cursor: not-allowed; border-color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.3);
+  }
+  .buy-btn.maxed-btn {
+    border-color: rgba(0,255,136,0.3); color: rgba(0,255,136,0.5);
+    cursor: default;
+  }
+
+  #garage-fly-btn {
+    display: block; width: 100%; margin-top: 24px;
+    padding: 14px; border: none; border-radius: 8px;
+    background: #00ff88; color: #000;
+    font-family: 'Courier New', monospace;
+    font-size: 15px; font-weight: bold;
+    letter-spacing: 3px; text-transform: uppercase;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  #garage-fly-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  #garage-fly-btn:active { transform: translateY(0); }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
 <div id="hud">
-  <!-- Telemetry -->
   <div class="panel">
     ALT:&nbsp;&nbsp; <span id="v-alt">0.00</span> m<br>
     TILT:&nbsp; <span id="v-tilt">0.0</span>°<br>
@@ -208,16 +335,13 @@
     DIST:&nbsp; <span id="v-dist">0</span> m
   </div>
 
-  <!-- Coin bank -->
   <div id="coins-hud">⬡ BANK: <span id="v-coins">0</span></div>
 
-  <!-- Canyon progress -->
   <div id="progress-wrap">
     TO FINISH: <span id="v-remain">500</span> m
     <div id="prog-track"><div id="prog-fill"></div></div>
   </div>
 
-  <!-- Battery -->
   <div id="batt-wrap">
     ⚡ BATTERY
     <div id="batt-track"><div id="batt-fill"></div></div>
@@ -234,7 +358,7 @@
     [Q / E] Yaw Left / Right<br>
     [R]&nbsp;&nbsp;&nbsp; Reset
   </div>
-  <div id="step-tag">Step 3 · Telemetry &amp; Payouts</div>
+  <div id="step-tag">Step 4 · The Garage</div>
 </div>
 
 <!-- Run-end overlay -->
@@ -266,7 +390,29 @@
   </div>
 
   <div id="bank-line">TOTAL BANK: <span id="pv-bank">0</span> coins</div>
-  <div id="end-hint">[R] to fly again</div>
+
+  <div class="end-btns">
+    <button class="end-btn btn-garage" id="end-garage-btn">⚙ GARAGE</button>
+    <button class="end-btn btn-fly"    id="end-fly-btn">▶ FLY AGAIN</button>
+  </div>
+  <div id="end-hint">[R] reset &nbsp;·&nbsp; [G] garage</div>
+</div>
+
+<!-- Garage overlay -->
+<div id="garage-overlay">
+  <div id="garage-inner">
+    <div id="garage-header">
+      <div id="garage-title">⚙ GARAGE</div>
+      <div id="garage-subtitle">Spend coins — upgrades persist between runs</div>
+      <div id="garage-bank">BANK: <span id="gv-bank">0</span> ⬡</div>
+    </div>
+
+    <div id="upgrade-list">
+      <!-- Upgrade cards injected by JS -->
+    </div>
+
+    <button id="garage-fly-btn">▶ TAKE OFF</button>
+  </div>
 </div>
 
 <script type="importmap">
@@ -282,47 +428,108 @@
 import * as THREE from 'three';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
 
-// ─── FLIGHT CONSTANTS ─────────────────────────────────────────────────────
-const GRAVITY        = -14;
-const DRONE_MASS     = 2.0;
-const CARGO_MASS     = 0.38;
-let   THRUST_POWER   = 38;     // N  — upgradeable
-let   AUTO_STABILIZE = 1.0;    // ×  — upgradeable
-let   MAX_BATTERY    = 100;    // units — upgradeable
-const BATTERY_DRAIN  = 7;      // units/sec while thrusting
-const TORQUE_POWER   = 7.5;
-const YAW_POWER      = 3.5;
-const LIN_DAMP       = 0.28;
-const ANG_DAMP       = 0.45;
-let   CRASH_VEL_THR  = 12;     // m/s impact velocity → violent crash — upgradeable
-const FINISH_Z       = -500;   // world Z of finish line
+// ─── UPGRADE DEFINITIONS ──────────────────────────────────────────────────
+/*
+  Each upgrade has up to 5 levels. Level 0 = base (unupgraded).
+  `values` array has 6 entries: [base, lvl1, lvl2, lvl3, lvl4, lvl5]
+  `costs`  array has 5 entries: cost to go from level N-1 → N
+*/
+const UPGRADES = [
+  {
+    id:     'battery',
+    name:   'High-Density Batteries',
+    desc:   'Increases total flight time — more thrust = more distance.',
+    icon:   '⚡',
+    unit:   ' units',
+    values: [100, 150, 220, 310, 420, 560],
+    costs:  [200, 450, 900, 1600, 2600],
+  },
+  {
+    id:     'thrust',
+    name:   'Motor KV Rating',
+    desc:   'Higher thrust lets you recover altitude faster and fight the wobble.',
+    icon:   '🔺',
+    unit:   ' N',
+    values: [38, 43, 49, 56, 64, 74],
+    costs:  [250, 550, 1050, 1900, 3000],
+  },
+  {
+    id:     'stability',
+    name:   'Gyroscope Tuning',
+    desc:   'Stronger auto-levelling — the drone snaps back to flat much faster.',
+    icon:   '◎',
+    unit:   '×',
+    values: [1.0, 1.5, 2.1, 2.9, 3.8, 5.0],
+    costs:  [175, 400, 800, 1450, 2400],
+  },
+  {
+    id:     'chassis',
+    name:   'Reinforced Chassis',
+    desc:   'Raises the crash velocity threshold — hit walls without instant destruction.',
+    icon:   '🛡',
+    unit:   ' m/s',
+    values: [12, 15, 19, 24, 30, 38],
+    costs:  [300, 650, 1200, 2100, 3300],
+  },
+];
 
-// Drone geometry half-extents
-const DX = 1.0, DY = 0.11, DZ = 1.0;
-const LIP_H = 0.12, LIP_T = 0.052;
-const CR = 0.27; // cargo box half-extent
+// ─── PERSISTENCE ──────────────────────────────────────────────────────────
+function loadInt(key, def) { return parseInt(localStorage.getItem(key) ?? def, 10); }
+function saveInt(key, val) { localStorage.setItem(key, String(val)); }
 
-// ─── PAYOUT CONSTANTS ─────────────────────────────────────────────────────
-const COINS_PER_METER       = 1.0;   // base distance reward
-const CARGO_BONUS_PER_BOX   = 150;   // per surviving cargo box
-const FINISH_BONUS          = 300;   // for crossing the finish line
-const FULL_CARGO_MULTIPLIER = 2.0;   // doubles total when all 3 boxes intact
-const SALVAGE_DIST_MULT     = 1.5;   // distance multiplier for battery-dead salvage
-const PITY_COINS            = 10;    // guaranteed floor for a crash
+let totalCoins = loadInt('gyrodrop_coins', 0);
 
-// ─── GAME STATE ───────────────────────────────────────────────────────────
-let battery       = MAX_BATTERY;
-let gameState     = 'flying'; // flying | battery_dead | crashed | finished | landed_safe
-let runEnded      = false;
+const upgradeLevels = {};
+UPGRADES.forEach(u => {
+  upgradeLevels[u.id] = loadInt(`gyrodrop_upg_${u.id}`, 0);
+});
 
-// ─── COIN BANK (persisted via localStorage) ───────────────────────────────
-let totalCoins = parseInt(localStorage.getItem('gyrodrop_coins') || '0', 10);
-
-function saveCoins() {
-  localStorage.setItem('gyrodrop_coins', String(totalCoins));
+function saveAll() {
+  saveInt('gyrodrop_coins', totalCoins);
+  UPGRADES.forEach(u => saveInt(`gyrodrop_upg_${u.id}`, upgradeLevels[u.id]));
 }
 
-// ─── SEEDED PRNG (deterministic canyon each session) ─────────────────────
+// ─── DERIVE LIVE PHYSICS VALUES FROM UPGRADES ─────────────────────────────
+function getUpgradeValue(id) {
+  const u = UPGRADES.find(x => x.id === id);
+  return u.values[upgradeLevels[id]];
+}
+
+// These are `let` so we can re-read them when resetting a run
+let MAX_BATTERY    = getUpgradeValue('battery');
+let THRUST_POWER   = getUpgradeValue('thrust');
+let AUTO_STABILIZE = getUpgradeValue('stability');
+let CRASH_VEL_THR  = getUpgradeValue('chassis');
+
+// ─── FLIGHT CONSTANTS ─────────────────────────────────────────────────────
+const GRAVITY       = -14;
+const DRONE_MASS    = 2.0;
+const CARGO_MASS    = 0.38;
+const BATTERY_DRAIN = 7;
+const TORQUE_POWER  = 7.5;
+const YAW_POWER     = 3.5;
+const LIN_DAMP      = 0.28;
+const ANG_DAMP      = 0.45;
+const FINISH_Z      = -500;
+
+const DX = 1.0, DY = 0.11, DZ = 1.0;
+const LIP_H = 0.12, LIP_T = 0.052;
+const CR = 0.27;
+
+// ─── PAYOUT CONSTANTS ─────────────────────────────────────────────────────
+const COINS_PER_METER       = 1.0;
+const CARGO_BONUS_PER_BOX   = 150;
+const FINISH_BONUS          = 300;
+const FULL_CARGO_MULTIPLIER = 2.0;
+const SALVAGE_DIST_MULT     = 1.5;
+const PITY_COINS            = 10;
+
+// ─── GAME STATE ───────────────────────────────────────────────────────────
+let battery   = MAX_BATTERY;
+let gameState = 'flying';
+let runEnded  = false;
+
+// ─── SEEDED PRNG ──────────────────────────────────────────────────────────
 function makePRNG(seed) {
   let s = seed >>> 0;
   return () => {
@@ -337,38 +544,24 @@ world.broadphase = new CANNON.SAPBroadphase(world);
 world.allowSleep = true;
 world.solver.iterations = 20;
 
-// ─── PHYSICS MATERIALS ────────────────────────────────────────────────────
 const matDrone  = new CANNON.Material('drone');
 const matCargo  = new CANNON.Material('cargo');
 const matGround = new CANNON.Material('ground');
 const matWall   = new CANNON.Material('wall');
 
-world.addContactMaterial(new CANNON.ContactMaterial(matDrone, matCargo, {
-  friction: 0.85, restitution: 0.06
-}));
-world.addContactMaterial(new CANNON.ContactMaterial(matGround, matCargo, {
-  friction: 0.55, restitution: 0.2
-}));
-world.addContactMaterial(new CANNON.ContactMaterial(matGround, matDrone, {
-  friction: 0.4, restitution: 0.05
-}));
-world.addContactMaterial(new CANNON.ContactMaterial(matWall, matDrone, {
-  friction: 0.3, restitution: 0.25
-}));
-world.addContactMaterial(new CANNON.ContactMaterial(matWall, matCargo, {
-  friction: 0.5, restitution: 0.15
-}));
+world.addContactMaterial(new CANNON.ContactMaterial(matDrone, matCargo,   { friction: 0.85, restitution: 0.06 }));
+world.addContactMaterial(new CANNON.ContactMaterial(matGround, matCargo,  { friction: 0.55, restitution: 0.2  }));
+world.addContactMaterial(new CANNON.ContactMaterial(matGround, matDrone,  { friction: 0.4,  restitution: 0.05 }));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall,   matDrone,  { friction: 0.3,  restitution: 0.25 }));
+world.addContactMaterial(new CANNON.ContactMaterial(matWall,   matCargo,  { friction: 0.5,  restitution: 0.15 }));
 
-// ─── GROUND BODY ──────────────────────────────────────────────────────────
 const gndBody = new CANNON.Body({ mass: 0, material: matGround });
 gndBody.addShape(new CANNON.Plane());
 gndBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
 world.addBody(gndBody);
 
-// ─── THREE.JS RENDERER & SCENE ────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({
-  canvas: document.getElementById('c'), antialias: true
-});
+// ─── THREE.JS ─────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -404,7 +597,7 @@ const rotorLights = [0,1,2,3].map(() => {
   return l;
 });
 
-// ─── GROUND MESH ──────────────────────────────────────────────────────────
+// ─── GROUND ───────────────────────────────────────────────────────────────
 const gndMesh = new THREE.Mesh(
   new THREE.PlaneGeometry(600, 600, 60, 60),
   new THREE.MeshStandardMaterial({ color: 0x0c140c, roughness: 0.95, metalness: 0.04 })
@@ -413,12 +606,11 @@ gndMesh.rotation.x = -Math.PI / 2;
 gndMesh.receiveShadow = true;
 scene.add(gndMesh);
 
-// Grid extends along canyon run
 const grid = new THREE.GridHelper(600, 100, 0x00ff4405, 0x00ff4403);
 grid.position.z = -300;
 scene.add(grid);
 
-// ─── BACKGROUND STARS ─────────────────────────────────────────────────────
+// ─── STARS ────────────────────────────────────────────────────────────────
 {
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(3600);
@@ -431,12 +623,10 @@ scene.add(grid);
     pos[i+2] = r * Math.sin(phi) * Math.sin(theta) - 250;
   }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
-    color: 0xffffff, size: 0.4, sizeAttenuation: true
-  })));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.4, sizeAttenuation: true })));
 }
 
-// ─── LAUNCH PAD (decorative) ──────────────────────────────────────────────
+// ─── LAUNCH PAD ───────────────────────────────────────────────────────────
 {
   const pad = new THREE.Mesh(
     new THREE.CylinderGeometry(3.5, 3.5, 0.1, 24),
@@ -457,9 +647,8 @@ scene.add(grid);
   }
 }
 
-// ─── PROCEDURAL CANYON GENERATION ─────────────────────────────────────────
-const wallBodies  = [];
-const wallMeshes  = [];
+// ─── PROCEDURAL CANYON ────────────────────────────────────────────────────
+const wallBodies = [], wallMeshes = [];
 
 const ROCK_MATS = [
   new THREE.MeshStandardMaterial({ color: 0x2c1e10, roughness: 0.94, metalness: 0.02 }),
@@ -475,7 +664,6 @@ function addWallBody(x, y, z, hw, hh, hd) {
   world.addBody(b);
   wallBodies.push(b);
 }
-
 function addWallMesh(x, y, z, w, h, d, mat) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z);
@@ -486,80 +674,64 @@ function addWallMesh(x, y, z, w, h, d, mat) {
 
 function generateCanyon() {
   const rng = makePRNG(4242);
-
-  const SEG_COUNT  = 36;
-  const SEG_LEN    = 15;
-  const WALL_W     = 8;
-  const WALL_OVER  = 2;
-  const CANYON_START_Z = -22;
+  const SEG_COUNT = 36, SEG_LEN = 15, WALL_W = 8, WALL_OVER = 2, CANYON_START_Z = -22;
 
   const pathX = [0];
   for (let i = 1; i < SEG_COUNT; i++) {
-    const prev  = pathX[i - 1];
-    const drift = (rng() - 0.5) * 5;
-    pathX.push(Math.max(-14, Math.min(14, prev + drift)));
+    pathX.push(Math.max(-14, Math.min(14, pathX[i-1] + (rng()-0.5)*5)));
   }
 
   for (let i = 0; i < SEG_COUNT; i++) {
-    const segCX = pathX[i];
-    const segCZ = CANYON_START_Z - i * SEG_LEN - SEG_LEN / 2;
+    const segCX   = pathX[i];
+    const segCZ   = CANYON_START_Z - i * SEG_LEN - SEG_LEN / 2;
     const progress = i / (SEG_COUNT - 1);
+    const halfW   = THREE.MathUtils.lerp(30, 11, progress) + Math.sin(i * 1.83) * 4.5;
+    const wallH   = 13 + rng() * 11;
+    const wallD   = SEG_LEN + WALL_OVER;
+    const leftX   = segCX - halfW - WALL_W / 2;
+    const rightX  = segCX + halfW + WALL_W / 2;
+    const mat     = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
 
-    const halfW = THREE.MathUtils.lerp(30, 11, progress) + Math.sin(i * 1.83) * 4.5;
-    const wallH = 13 + rng() * 11;
-    const wallD = SEG_LEN + WALL_OVER;
-
-    const leftX  = segCX - halfW - WALL_W / 2;
-    const rightX = segCX + halfW + WALL_W / 2;
-    const mat    = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
-
-    addWallBody(leftX,  wallH / 2, segCZ, WALL_W / 2, wallH / 2, wallD / 2);
-    addWallBody(rightX, wallH / 2, segCZ, WALL_W / 2, wallH / 2, wallD / 2);
-    addWallMesh(leftX,  wallH / 2, segCZ, WALL_W, wallH, wallD, mat);
-    addWallMesh(rightX, wallH / 2, segCZ, WALL_W, wallH, wallD, mat);
+    addWallBody(leftX,  wallH/2, segCZ, WALL_W/2, wallH/2, wallD/2);
+    addWallBody(rightX, wallH/2, segCZ, WALL_W/2, wallH/2, wallD/2);
+    addWallMesh(leftX,  wallH/2, segCZ, WALL_W, wallH, wallD, mat);
+    addWallMesh(rightX, wallH/2, segCZ, WALL_W, wallH, wallD, mat);
 
     for (let t = 0; t < 4; t++) {
-      const tz  = segCZ + (rng() - 0.5) * (SEG_LEN * 0.82);
-      const th  = 1.5 + rng() * 5;
-      const tw  = 0.9 + rng() * 2;
-      const trx = (rng() - 0.5) * WALL_W * 0.5;
-      const toothMat = ROCK_MATS[Math.floor(rng() * ROCK_MATS.length)];
-      addWallMesh(leftX  + trx, wallH + th / 2, tz, tw, th, tw, toothMat);
-      addWallMesh(rightX + trx, wallH + th / 2, tz, tw, th, tw, toothMat);
+      const tz = segCZ + (rng()-0.5)*(SEG_LEN*0.82);
+      const th = 1.5 + rng()*5, tw = 0.9 + rng()*2;
+      const trx = (rng()-0.5)*WALL_W*0.5;
+      const tm  = ROCK_MATS[Math.floor(rng()*ROCK_MATS.length)];
+      addWallMesh(leftX+trx,  wallH+th/2, tz, tw, th, tw, tm);
+      addWallMesh(rightX+trx, wallH+th/2, tz, tw, th, tw, tm);
     }
 
     if (progress > 0.4 && rng() > 0.65) {
-      const ohD = SEG_LEN * 0.55;
-      const ohH = 2.5 + rng() * 3;
-      const ohZ = segCZ + (rng() - 0.5) * 4;
+      const ohD = SEG_LEN*0.55, ohH = 2.5 + rng()*3, ohZ = segCZ + (rng()-0.5)*4;
+      const ohW = 2 + rng()*3;
       if (rng() > 0.5) {
-        const ohW = 2 + rng() * 3;
-        addWallBody(leftX + WALL_W / 2 + ohW / 2, wallH - ohH / 2, ohZ, ohW / 2, ohH / 2, ohD / 2);
-        addWallMesh(leftX + WALL_W / 2 + ohW / 2, wallH - ohH / 2, ohZ, ohW, ohH, ohD, mat);
+        addWallBody(leftX+WALL_W/2+ohW/2, wallH-ohH/2, ohZ, ohW/2, ohH/2, ohD/2);
+        addWallMesh(leftX+WALL_W/2+ohW/2, wallH-ohH/2, ohZ, ohW, ohH, ohD, mat);
       } else {
-        const ohW = 2 + rng() * 3;
-        addWallBody(rightX - WALL_W / 2 - ohW / 2, wallH - ohH / 2, ohZ, ohW / 2, ohH / 2, ohD / 2);
-        addWallMesh(rightX - WALL_W / 2 - ohW / 2, wallH - ohH / 2, ohZ, ohW, ohH, ohD, mat);
+        addWallBody(rightX-WALL_W/2-ohW/2, wallH-ohH/2, ohZ, ohW/2, ohH/2, ohD/2);
+        addWallMesh(rightX-WALL_W/2-ohW/2, wallH-ohH/2, ohZ, ohW, ohH, ohD, mat);
       }
     }
   }
 
-  for (let i = 4; i < SEG_COUNT - 2; i += 3 + Math.floor(rng() * 3)) {
-    const progress  = i / (SEG_COUNT - 1);
-    const segCX     = pathX[i];
-    const segZ      = CANYON_START_Z - i * SEG_LEN;
-    const halfW     = THREE.MathUtils.lerp(30, 11, progress);
-    const numPill   = rng() > 0.55 ? 2 : 1;
-
+  for (let i = 4; i < SEG_COUNT - 2; i += 3 + Math.floor(rng()*3)) {
+    const progress = i / (SEG_COUNT-1);
+    const segCX = pathX[i];
+    const segZ  = CANYON_START_Z - i * SEG_LEN;
+    const halfW = THREE.MathUtils.lerp(30, 11, progress);
+    const numPill = rng() > 0.55 ? 2 : 1;
     for (let p = 0; p < numPill; p++) {
-      const px   = segCX + (rng() - 0.5) * halfW * 1.1;
-      const pZ   = segZ  + (rng() - 0.5) * SEG_LEN * 0.6;
-      const ph   = 3 + rng() * 10;
-      const pw   = 1.0 + rng() * 1.4;
-
-      addWallBody(px, ph / 2, pZ, pw / 2, ph / 2, pw / 2);
+      const px = segCX + (rng()-0.5)*halfW*1.1;
+      const pZ = segZ  + (rng()-0.5)*SEG_LEN*0.6;
+      const ph = 3 + rng()*10, pw = 1.0 + rng()*1.4;
+      addWallBody(px, ph/2, pZ, pw/2, ph/2, pw/2);
       const pm = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, pw), PILLAR_MAT);
-      pm.position.set(px, ph / 2, pZ);
+      pm.position.set(px, ph/2, pZ);
       pm.receiveShadow = true;
       scene.add(pm);
       wallMeshes.push(pm);
@@ -571,53 +743,41 @@ function generateCanyon() {
 
 function buildFinishLine() {
   const fz = FINISH_Z;
-  const finishGroup = new THREE.Group();
-
+  const fg = new THREE.Group();
   const postMat = new THREE.MeshStandardMaterial({
-    color: 0xffcc00, emissive: 0x885500, emissiveIntensity: 0.6,
-    roughness: 0.3, metalness: 0.7
+    color: 0xffcc00, emissive: 0x885500, emissiveIntensity: 0.6, roughness: 0.3, metalness: 0.7
   });
   [-11, 11].forEach(x => {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 20, 10), postMat);
     post.position.set(x, 10, 0);
-    finishGroup.add(post);
+    fg.add(post);
   });
-
   const bar = new THREE.Mesh(new THREE.BoxGeometry(22.7, 0.6, 0.6), postMat);
   bar.position.set(0, 20, 0);
-  finishGroup.add(bar);
-
-  const lightColors = [0xff2200, 0xff8800, 0xffee00, 0x22ff44, 0x00aaff, 0xaa44ff];
-  lightColors.forEach((col, i) => {
+  fg.add(bar);
+  [0xff2200,0xff8800,0xffee00,0x22ff44,0x00aaff,0xaa44ff].forEach((col, i) => {
     const bx = -9 + i * 3.6;
-    const ball = new THREE.Mesh(
-      new THREE.SphereGeometry(0.42, 10, 7),
-      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 2.0 })
-    );
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 7),
+      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 2.0 }));
     ball.position.set(bx, 20.5, 0);
-    finishGroup.add(ball);
+    fg.add(ball);
     const pl = new THREE.PointLight(col, 3, 9);
     pl.position.set(bx, 20.5, 0);
-    finishGroup.add(pl);
+    fg.add(pl);
   });
-
   for (let d = 0; d < 5; d++) {
-    const chev = new THREE.Mesh(
-      new THREE.BoxGeometry(22, 0.06, 0.5),
-      new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0x443300, emissiveIntensity: 0.4 })
-    );
-    chev.position.set(0, 0.04, d * 4 + 2);
-    finishGroup.add(chev);
+    const chev = new THREE.Mesh(new THREE.BoxGeometry(22, 0.06, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0x443300, emissiveIntensity: 0.4 }));
+    chev.position.set(0, 0.04, d*4+2);
+    fg.add(chev);
   }
-
   [-11, 11].forEach(x => {
     const beacon = new THREE.PointLight(0xffcc00, 2.5, 18);
     beacon.position.set(x, 1.5, 0);
-    finishGroup.add(beacon);
+    fg.add(beacon);
   });
-
-  finishGroup.position.set(0, 0, fz);
-  scene.add(finishGroup);
+  fg.position.set(0, 0, fz);
+  scene.add(fg);
 }
 
 generateCanyon();
@@ -625,13 +785,11 @@ generateCanyon();
 // ─── DRONE BODY ───────────────────────────────────────────────────────────
 const droneBody = new CANNON.Body({ mass: DRONE_MASS, material: matDrone });
 droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, DY, DZ)));
-
 const lipY = DY + LIP_H;
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)), new CANNON.Vec3(0, lipY, -(DZ - LIP_T)));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)), new CANNON.Vec3(0, lipY,  (DZ - LIP_T)));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)), new CANNON.Vec3(-(DX - LIP_T), lipY, 0));
-droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)), new CANNON.Vec3( (DX - LIP_T), lipY, 0));
-
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),   new CANNON.Vec3(0, lipY, -(DZ-LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX, LIP_H, LIP_T)),   new CANNON.Vec3(0, lipY,  (DZ-LIP_T)));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),   new CANNON.Vec3(-(DX-LIP_T), lipY, 0));
+droneBody.addShape(new CANNON.Box(new CANNON.Vec3(LIP_T, LIP_H, DZ)),   new CANNON.Vec3( (DX-LIP_T), lipY, 0));
 droneBody.linearDamping  = LIN_DAMP;
 droneBody.angularDamping = ANG_DAMP;
 world.addBody(droneBody);
@@ -641,8 +799,7 @@ const CARGO_COLORS = [0xff6b35, 0x00d4ff, 0xffe033];
 const cargoBodies  = CARGO_COLORS.map(() => {
   const b = new CANNON.Body({ mass: CARGO_MASS, material: matCargo });
   b.addShape(new CANNON.Box(new CANNON.Vec3(CR, CR, CR)));
-  b.linearDamping  = 0.2;
-  b.angularDamping = 0.35;
+  b.linearDamping = 0.2; b.angularDamping = 0.35;
   world.addBody(b);
   return b;
 });
@@ -651,19 +808,15 @@ const cargoBodies  = CARGO_COLORS.map(() => {
 const droneGroup = new THREE.Group();
 scene.add(droneGroup);
 
-droneGroup.add(Object.assign(
-  new THREE.Mesh(
-    new THREE.BoxGeometry(DX*2, DY*2, DZ*2),
-    new THREE.MeshStandardMaterial({ color: 0x252830, roughness: 0.22, metalness: 0.88 })
-  ), { castShadow: true, receiveShadow: true }
-));
+droneGroup.add(Object.assign(new THREE.Mesh(
+  new THREE.BoxGeometry(DX*2, DY*2, DZ*2),
+  new THREE.MeshStandardMaterial({ color: 0x252830, roughness: 0.22, metalness: 0.88 })
+), { castShadow: true, receiveShadow: true }));
 
-droneGroup.add(Object.assign(
-  new THREE.Mesh(
-    new THREE.CylinderGeometry(0.17, 0.21, 0.16, 8),
-    new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.28, metalness: 0.92 })
-  ), { castShadow: true }
-));
+droneGroup.add(Object.assign(new THREE.Mesh(
+  new THREE.CylinderGeometry(0.17, 0.21, 0.16, 8),
+  new THREE.MeshStandardMaterial({ color: 0x181a22, roughness: 0.28, metalness: 0.92 })
+), { castShadow: true }));
 
 const ARM_DIRS = [
   new THREE.Vector3( DX*0.72, 0, -DZ*0.72),
@@ -672,9 +825,9 @@ const ARM_DIRS = [
   new THREE.Vector3(-DX*0.72, 0,  DZ*0.72),
 ];
 const rotorDiscs = [];
-const armMat    = new THREE.MeshStandardMaterial({ color: 0x1c1e27, roughness: 0.32, metalness: 0.82 });
-const motorMat  = new THREE.MeshStandardMaterial({ color: 0x2e3040, roughness: 0.2,  metalness: 0.9 });
-const rotorMat  = new THREE.MeshStandardMaterial({
+const armMat   = new THREE.MeshStandardMaterial({ color: 0x1c1e27, roughness: 0.32, metalness: 0.82 });
+const motorMat = new THREE.MeshStandardMaterial({ color: 0x2e3040, roughness: 0.2,  metalness: 0.9  });
+const rotorMat = new THREE.MeshStandardMaterial({
   color: 0x00ffaa, emissive: 0x00aa66, emissiveIntensity: 0.9,
   transparent: true, opacity: 0.55, side: THREE.DoubleSide
 });
@@ -685,11 +838,9 @@ ARM_DIRS.forEach(dir => {
   arm.lookAt(dir.clone().multiplyScalar(3));
   arm.castShadow = true;
   droneGroup.add(arm);
-
   const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.13, 8), motorMat);
   motor.position.set(dir.x, 0.08, dir.z);
   droneGroup.add(motor);
-
   const rotor = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.02, 16), rotorMat);
   rotor.position.set(dir.x, 0.13, dir.z);
   droneGroup.add(rotor);
@@ -717,29 +868,41 @@ const cargoMeshes = CARGO_COLORS.map(color => {
 // ─── INPUT ────────────────────────────────────────────────────────────────
 const K = {};
 const PREVENT = new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
-addEventListener('keydown', e => { K[e.code] = true; if (PREVENT.has(e.code)) e.preventDefault(); });
-addEventListener('keyup',   e => { K[e.code] = false; });
+addEventListener('keydown', e => {
+  K[e.code] = true;
+  if (PREVENT.has(e.code)) e.preventDefault();
+  if (e.code === 'KeyG' && runEnded)  openGarage();
+  if (e.code === 'KeyR')              doReset();
+});
+addEventListener('keyup', e => { K[e.code] = false; });
 
-// ─── CRASH DETECTION VIA COLLISION EVENT ──────────────────────────────────
+// ─── CRASH DETECTION ──────────────────────────────────────────────────────
 droneBody.addEventListener('collide', event => {
   if (runEnded) return;
   const v = event.contact.getImpactVelocityAlongNormal();
-  if (Math.abs(v) > CRASH_VEL_THR) {
-    endRun('crashed');
-  }
+  if (Math.abs(v) > CRASH_VEL_THR) endRun('crashed');
 });
 
 // ─── RESET ────────────────────────────────────────────────────────────────
-const START_Y = 2.5;
+const START_Y   = 2.5;
 const camSmooth = new THREE.Vector3(0, 7, 14);
 const camLookAt = new THREE.Vector3(0, START_Y, 0);
 
+function applyUpgradesToPhysics() {
+  MAX_BATTERY    = getUpgradeValue('battery');
+  THRUST_POWER   = getUpgradeValue('thrust');
+  AUTO_STABILIZE = getUpgradeValue('stability');
+  CRASH_VEL_THR  = getUpgradeValue('chassis');
+}
+
 function resetDrone() {
-  battery       = MAX_BATTERY;
-  gameState     = 'flying';
-  runEnded      = false;
+  applyUpgradesToPhysics();
+  battery   = MAX_BATTERY;
+  gameState = 'flying';
+  runEnded  = false;
 
   document.getElementById('end-overlay').style.display  = 'none';
+  document.getElementById('garage-overlay').style.display = 'none';
   document.getElementById('batt-dead').style.display    = 'none';
 
   droneBody.position.set(0, START_Y, 0);
@@ -752,7 +915,7 @@ function resetDrone() {
 
   const deckTop = START_Y + DY;
   cargoBodies.forEach((b, i) => {
-    b.position.set(0, deckTop + CR + i * (CR*2 + 0.025), 0);
+    b.position.set(0, deckTop + CR + i*(CR*2+0.025), 0);
     b.velocity.set(0, 0, 0);
     b.angularVelocity.set(0, 0, 0);
     b.quaternion.set(0, 0, 0, 1);
@@ -765,7 +928,10 @@ function resetDrone() {
   camLookAt.set(0, START_Y, 0);
 }
 
-addEventListener('keydown', e => { if (e.code === 'KeyR') resetDrone(); });
+function doReset() {
+  if (document.getElementById('garage-overlay').style.display === 'flex') return;
+  resetDrone();
+}
 
 // ─── CARGO COUNT ──────────────────────────────────────────────────────────
 function countCargo() {
@@ -775,85 +941,40 @@ function countCargo() {
     const dy = b.position.y - pos.y;
     const dx = Math.abs(b.position.x - pos.x);
     const dz = Math.abs(b.position.z - pos.z);
-    if (dy > -0.5 && dy < 2.5 && dx < DX + CR + 0.2 && dz < DZ + CR + 0.2) n++;
+    if (dy > -0.5 && dy < 2.5 && dx < DX+CR+0.2 && dz < DZ+CR+0.2) n++;
   });
   return n;
 }
 
 // ─── PAYOUT MATRIX ────────────────────────────────────────────────────────
-/*
-  Scenario A — Finish + 3/3 cargo:
-    (dist * COINS_PER_METER + FINISH_BONUS + 3 * CARGO_BONUS_PER_BOX) × FULL_CARGO_MULTIPLIER
-    e.g. (500 + 300 + 450) × 2 = 2500  ← MASSIVE PAYOUT
-
-  Scenario B — Finish + partial cargo:
-    dist * COINS_PER_METER + FINISH_BONUS + cargo * CARGO_BONUS_PER_BOX
-    e.g. (500 + 300 + 150) = 950
-
-  Scenario C — Finish + 0 cargo:
-    Flat delivery fee only — 75 coins
-
-  Scenario D — Battery dead + gentle landing + cargo:
-    dist * COINS_PER_METER * SALVAGE_DIST_MULT + cargo * CARGO_BONUS_PER_BOX
-    e.g. (300 * 1.5 + 450) = 900  ← main grinding loop
-
-  Scenario E — Violent crash:
-    PITY_COINS (10) — no bonuses, drone destroyed
-*/
 function calcPayout(reason, distM, cargo) {
   const dist = Number(distM);
 
   if (reason === 'crashed') {
-    return {
-      scenario:  'VIOLENT CRASH',
-      distCoins: 0,
-      cargoCoins: 0,
-      finishCoins: 0,
-      multiplier: 1.0,
-      earned: PITY_COINS,
-    };
+    return { scenario: 'VIOLENT CRASH', distCoins: 0, cargoCoins: 0, finishCoins: 0, multiplier: 1.0, earned: PITY_COINS };
   }
 
   if (reason === 'finished') {
     if (cargo === 0) {
-      // Scenario C — delivery fee only
-      return {
-        scenario:   'DELIVERY FEE',
-        distCoins:  0,
-        cargoCoins: 0,
-        finishCoins: 75,
-        multiplier: 1.0,
-        earned: 75,
-      };
+      return { scenario: 'DELIVERY FEE', distCoins: 0, cargoCoins: 0, finishCoins: 75, multiplier: 1.0, earned: 75 };
     }
     const distCoins  = Math.floor(dist * COINS_PER_METER);
     const cargoCoins = cargo * CARGO_BONUS_PER_BOX;
     const mult       = cargo === 3 ? FULL_CARGO_MULTIPLIER : 1.0;
-    const scenarioLabel = cargo === 3 ? 'PERFECT DELIVERY' : 'PARTIAL DELIVERY';
     const earned     = Math.floor((distCoins + FINISH_BONUS + cargoCoins) * mult);
     return {
-      scenario:    scenarioLabel,
-      distCoins,
-      cargoCoins,
-      finishCoins: FINISH_BONUS,
-      multiplier:  mult,
-      earned,
+      scenario:    cargo === 3 ? 'PERFECT DELIVERY' : 'PARTIAL DELIVERY',
+      distCoins, cargoCoins, finishCoins: FINISH_BONUS, multiplier: mult, earned
     };
   }
 
-  // landed_safe (battery dead)
   const distCoins  = Math.floor(dist * COINS_PER_METER * SALVAGE_DIST_MULT);
   const cargoCoins = cargo * CARGO_BONUS_PER_BOX;
   const mult       = cargo === 3 ? FULL_CARGO_MULTIPLIER : 1.0;
-  const scenarioLabel = cargo > 0 ? 'SALVAGE RUN' : 'FORCED LANDING';
   const earned     = Math.max(PITY_COINS, Math.floor((distCoins + cargoCoins) * mult));
   return {
-    scenario:    scenarioLabel,
-    distCoins,
-    cargoCoins,
-    finishCoins: 0,
-    multiplier:  mult,
-    earned,
+    scenario:    cargo > 0 ? 'SALVAGE RUN' : 'FORCED LANDING',
+    distCoins, cargoCoins, finishCoins: 0, multiplier: mult, earned
   };
 }
 
@@ -864,34 +985,21 @@ function endRun(reason) {
   gameState = reason;
   document.getElementById('batt-dead').style.display = 'none';
 
-  const distM = Math.max(0, -droneBody.position.z).toFixed(0);
-  const cargo = countCargo();
+  const distM  = Math.max(0, -droneBody.position.z).toFixed(0);
+  const cargo  = countCargo();
   const payout = calcPayout(reason, distM, cargo);
 
   totalCoins += payout.earned;
-  saveCoins();
+  saveAll();
 
-  // ── Titles & colours ──────────────────────────────────────────────────
-  const titleMap = {
-    finished:    '✓ FINISH LINE',
-    crashed:     '✕ WRECKAGE',
-    landed_safe: '▼ BATTERY DEAD',
-  };
-  const colorMap = {
-    finished:    '#00ff88',
-    crashed:     '#ff3300',
-    landed_safe: '#ffaa00',
-  };
+  const titleMap = { finished: '✓ FINISH LINE', crashed: '✕ WRECKAGE', landed_safe: '▼ BATTERY DEAD' };
+  const colorMap = { finished: '#00ff88', crashed: '#ff3300', landed_safe: '#ffaa00' };
 
-  const title    = document.getElementById('end-title');
-  const scenario = document.getElementById('end-scenario');
-  title.textContent = titleMap[reason] || 'RUN ENDED';
-  title.style.color = colorMap[reason] || '#fff';
-  scenario.textContent = payout.scenario;
+  document.getElementById('end-title').textContent    = titleMap[reason] || 'RUN ENDED';
+  document.getElementById('end-title').style.color    = colorMap[reason] || '#fff';
+  document.getElementById('end-scenario').textContent = payout.scenario;
 
-  // ── Payout rows ───────────────────────────────────────────────────────
   const fmt = n => (n > 0 ? '+' : '') + n + ' ⬡';
-
   document.getElementById('pv-dist').textContent        = fmt(payout.distCoins);
   document.getElementById('pv-cargo-count').textContent = cargo;
   document.getElementById('pv-cargo').textContent       = fmt(payout.cargoCoins);
@@ -900,14 +1008,89 @@ function endRun(reason) {
   document.getElementById('pv-total').textContent       = payout.earned + ' ⬡';
   document.getElementById('pv-bank').textContent        = totalCoins.toLocaleString();
 
-  // Hide multiplier row if it's ×1.0
-  document.getElementById('pr-mult').style.display = payout.multiplier !== 1.0 ? 'flex' : 'none';
-  // Hide finish bonus row if 0
-  document.getElementById('pr-finish').style.display = payout.finishCoins > 0 ? 'flex' : 'none';
+  document.getElementById('pr-mult').style.display   = payout.multiplier !== 1.0 ? 'flex' : 'none';
+  document.getElementById('pr-finish').style.display = payout.finishCoins > 0    ? 'flex' : 'none';
 
-  // ── Show overlay ──────────────────────────────────────────────────────
   document.getElementById('end-overlay').style.display = 'flex';
 }
+
+// ─── GARAGE UI ────────────────────────────────────────────────────────────
+function renderGarage() {
+  document.getElementById('gv-bank').textContent = totalCoins.toLocaleString();
+  const list = document.getElementById('upgrade-list');
+  list.innerHTML = '';
+
+  UPGRADES.forEach(u => {
+    const level   = upgradeLevels[u.id];
+    const maxLevel = u.values.length - 1;
+    const isMaxed  = level >= maxLevel;
+    const curVal   = u.values[level];
+    const nextVal  = isMaxed ? null : u.values[level + 1];
+    const cost     = isMaxed ? null : u.costs[level];
+    const canAfford = !isMaxed && totalCoins >= cost;
+
+    const card = document.createElement('div');
+    card.className = 'upgrade-card' + (isMaxed ? ' maxed' : '');
+
+    const pips = Array.from({ length: maxLevel }, (_, i) =>
+      `<div class="pip${i < level ? ' filled' + (isMaxed ? ' maxed' : '') : ''}"></div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="ug-top">
+        <div>
+          <div class="ug-name">${u.icon} ${u.name}</div>
+          <div class="ug-desc">${u.desc}</div>
+        </div>
+        <div class="ug-stat">
+          <div class="ug-stat-cur">NOW: ${curVal}${u.unit}</div>
+          <div class="ug-stat-next ${isMaxed ? 'maxed-val' : ''}">
+            ${isMaxed ? '✓ MAX LEVEL' : `NEXT: ${nextVal}${u.unit}`}
+          </div>
+        </div>
+      </div>
+      <div class="ug-pips">${pips}</div>
+      <div class="ug-bottom">
+        <div class="ug-cost ${!isMaxed && !canAfford ? 'cant-afford' : ''}">
+          ${isMaxed ? 'Fully upgraded' : `Cost: ${cost.toLocaleString()} ⬡`}
+        </div>
+        <button class="buy-btn ${isMaxed ? 'maxed-btn' : ''}"
+          ${isMaxed || !canAfford ? 'disabled' : ''}
+          data-id="${u.id}">
+          ${isMaxed ? '✓ MAXED' : 'UPGRADE'}
+        </button>
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('.buy-btn:not(:disabled)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id    = btn.dataset.id;
+      const u     = UPGRADES.find(x => x.id === id);
+      const level = upgradeLevels[id];
+      const cost  = u.costs[level];
+      if (totalCoins >= cost) {
+        totalCoins -= cost;
+        upgradeLevels[id]++;
+        saveAll();
+        renderGarage();
+      }
+    });
+  });
+}
+
+function openGarage() {
+  document.getElementById('end-overlay').style.display    = 'none';
+  document.getElementById('garage-overlay').style.display = 'flex';
+  renderGarage();
+}
+
+// Wire up buttons
+document.getElementById('end-garage-btn').addEventListener('click', openGarage);
+document.getElementById('end-fly-btn').addEventListener('click',    () => resetDrone());
+document.getElementById('garage-fly-btn').addEventListener('click', () => resetDrone());
 
 // ─── FLIGHT CONTROLLER ────────────────────────────────────────────────────
 const _upLocal   = new CANNON.Vec3(0, 1, 0);
@@ -919,11 +1102,11 @@ const _localTorq = new CANNON.Vec3();
 function applyFlightForces() {
   if (runEnded) return;
 
-  const battAlive  = battery > 0;
-  const thrusting  = K['Space'] && battAlive;
-  const pitchIn    = (+(K['KeyW'] || K['ArrowUp']))    - (+(K['KeyS'] || K['ArrowDown']));
-  const rollIn     = (+(K['KeyD'] || K['ArrowRight'])) - (+(K['KeyA'] || K['ArrowLeft']));
-  const yawIn      = (+K['KeyQ']) - (+K['KeyE']);
+  const battAlive = battery > 0;
+  const thrusting = K['Space'] && battAlive;
+  const pitchIn   = (+(K['KeyW']||K['ArrowUp']))    - (+(K['KeyS']||K['ArrowDown']));
+  const rollIn    = (+(K['KeyD']||K['ArrowRight'])) - (+(K['KeyA']||K['ArrowLeft']));
+  const yawIn     = (+K['KeyQ']) - (+K['KeyE']);
 
   if (thrusting) {
     droneBody.quaternion.vmult(_upLocal, _thrustVec);
@@ -937,9 +1120,7 @@ function applyFlightForces() {
   }
 
   _localTorq.set(pitchIn * TORQUE_POWER, yawIn * YAW_POWER, rollIn * TORQUE_POWER);
-  if (pitchIn !== 0 || rollIn !== 0 || yawIn !== 0) {
-    droneBody.applyLocalTorque(_localTorq);
-  }
+  if (pitchIn !== 0 || rollIn !== 0 || yawIn !== 0) droneBody.applyLocalTorque(_localTorq);
 
   droneBody.quaternion.vmult(_upLocal, _worldUp);
   _worldUp.cross(_upLocal, _pidCorr);
@@ -953,39 +1134,27 @@ function applyFlightForces() {
 // ─── GAME-STATE CHECKS ────────────────────────────────────────────────────
 function checkGameState() {
   if (runEnded) return;
-
-  if (droneBody.position.z <= FINISH_Z) {
-    endRun('finished');
-    return;
-  }
-
+  if (droneBody.position.z <= FINISH_Z) { endRun('finished'); return; }
   if (gameState === 'battery_dead') {
     const spd = droneBody.velocity.length();
-    if (droneBody.position.y <= DY + 0.3 && spd < 4.0) {
-      endRun('landed_safe');
-    }
+    if (droneBody.position.y <= DY + 0.3 && spd < 4.0) endRun('landed_safe');
   }
 }
 
-// ─── SYNC THREE ↔ CANNON ──────────────────────────────────────────────────
+// ─── SYNC MESHES ──────────────────────────────────────────────────────────
 const _rotorWP = ARM_DIRS.map(() => new THREE.Vector3());
 
 function syncMeshes() {
   droneGroup.position.copy(droneBody.position);
   droneGroup.quaternion.copy(droneBody.quaternion);
-
   cargoMeshes.forEach((m, i) => {
     m.position.copy(cargoBodies[i].position);
     m.quaternion.copy(cargoBodies[i].quaternion);
   });
-
   const spin = K['Space'] && battery > 0 ? 0.38 : 0.07;
-  rotorDiscs.forEach((r, i) => { r.rotation.y += (i % 2 ? 1 : -1) * spin; });
-
+  rotorDiscs.forEach((r, i) => { r.rotation.y += (i%2 ? 1 : -1) * spin; });
   ARM_DIRS.forEach((dir, i) => {
-    _rotorWP[i].copy(dir).setY(0.15)
-      .applyQuaternion(droneGroup.quaternion)
-      .add(droneGroup.position);
+    _rotorWP[i].copy(dir).setY(0.15).applyQuaternion(droneGroup.quaternion).add(droneGroup.position);
     rotorLights[i].position.copy(_rotorWP[i]);
     rotorLights[i].intensity = (K['Space'] && battery > 0) ? 2.2 : 0.4;
   });
@@ -996,15 +1165,12 @@ let camYaw = 0;
 
 function updateCamera() {
   const q  = droneBody.quaternion;
-  const sY = 2 * (q.w * q.y + q.z * q.x);
-  const cY = 1 - 2 * (q.x * q.x + q.y * q.y);
+  const sY = 2*(q.w*q.y + q.z*q.x);
+  const cY = 1 - 2*(q.x*q.x + q.y*q.y);
   camYaw  += (Math.atan2(sY, cY) - camYaw) * 0.04;
 
-  const offset = new THREE.Vector3(0, 4.5, 9)
-    .applyEuler(new THREE.Euler(0, camYaw, 0));
-  const dPos = new THREE.Vector3(
-    droneBody.position.x, droneBody.position.y, droneBody.position.z
-  );
+  const offset = new THREE.Vector3(0, 4.5, 9).applyEuler(new THREE.Euler(0, camYaw, 0));
+  const dPos   = new THREE.Vector3(droneBody.position.x, droneBody.position.y, droneBody.position.z);
   camSmooth.lerp(dPos.clone().add(offset), 0.06);
   camLookAt.lerp(dPos.clone().setY(dPos.y + 0.3), 0.10);
   camera.position.copy(camSmooth);
@@ -1038,8 +1204,8 @@ function updateHUD() {
   const onBoard = countCargo();
   elCargo.textContent = `${onBoard} / 3`;
 
-  const dist    = Math.max(0, -pos.z);
-  const remain  = Math.max(0, 500 + pos.z);
+  const dist   = Math.max(0, -pos.z);
+  const remain = Math.max(0, 500 + pos.z);
   elDist.textContent   = dist.toFixed(0);
   elRemain.textContent = remain.toFixed(0);
   progFill.style.width = Math.min(100, dist / 5) + '%';
@@ -1058,32 +1224,22 @@ function drawHorizon(roll, pitch) {
   tiltCtx.clearRect(0, 0, 90, 90);
   tiltCtx.save();
   tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.clip();
-
   tiltCtx.save();
   tiltCtx.translate(45, 45);
   tiltCtx.rotate(-Math.asin(Math.max(-1, Math.min(1, roll))));
   const pOff = pitch * 48;
-  tiltCtx.fillStyle = '#001844';
-  tiltCtx.fillRect(-45, -45, 90, 45 + pOff);
-  tiltCtx.fillStyle = '#0d2208';
-  tiltCtx.fillRect(-45, pOff, 90, 45 - pOff);
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.5)';
-  tiltCtx.lineWidth = 1.5;
+  tiltCtx.fillStyle = '#001844'; tiltCtx.fillRect(-45, -45, 90, 45+pOff);
+  tiltCtx.fillStyle = '#0d2208'; tiltCtx.fillRect(-45, pOff, 90, 45-pOff);
+  tiltCtx.strokeStyle = 'rgba(255,255,255,0.5)'; tiltCtx.lineWidth = 1.5;
   tiltCtx.beginPath(); tiltCtx.moveTo(-43, pOff); tiltCtx.lineTo(43, pOff); tiltCtx.stroke();
-  tiltCtx.restore();
-  tiltCtx.restore();
-
-  tiltCtx.strokeStyle = 'rgba(0,255,136,0.28)';
-  tiltCtx.lineWidth = 1;
+  tiltCtx.restore(); tiltCtx.restore();
+  tiltCtx.strokeStyle = 'rgba(0,255,136,0.28)'; tiltCtx.lineWidth = 1;
   tiltCtx.beginPath(); tiltCtx.arc(45, 45, 43, 0, Math.PI*2); tiltCtx.stroke();
-
-  tiltCtx.strokeStyle = 'rgba(255,255,255,0.55)';
-  tiltCtx.lineWidth = 1;
+  tiltCtx.strokeStyle = 'rgba(255,255,255,0.55)'; tiltCtx.lineWidth = 1;
   tiltCtx.beginPath();
   tiltCtx.moveTo(34,45); tiltCtx.lineTo(56,45);
   tiltCtx.moveTo(45,34); tiltCtx.lineTo(45,56);
   tiltCtx.stroke();
-
   tiltCtx.fillStyle = '#fff';
   tiltCtx.beginPath(); tiltCtx.arc(45, 45, 2, 0, Math.PI*2); tiltCtx.fill();
 }

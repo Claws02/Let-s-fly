@@ -184,6 +184,64 @@
 
   @keyframes panelIn { from{transform:translateY(22px) scale(0.96);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
   @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+  /* ═══════════════════════════════════════
+     TOUCH CONTROLS
+  ═══════════════════════════════════════ */
+  #touch-overlay {
+    display: none; position: fixed; inset: 0;
+    pointer-events: none; z-index: 50;
+  }
+  @media (pointer: coarse) { #touch-overlay { display: block; } }
+
+  #joy-zone {
+    position: absolute; bottom: 120px; left: 20px;
+    width: 130px; height: 130px;
+    pointer-events: all; touch-action: none;
+  }
+  #joy-bg {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: rgba(0,255,136,0.05); border: 1.5px solid rgba(0,255,136,0.18);
+  }
+  #joy-knob {
+    position: absolute; width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(0,255,136,0.18); border: 2px solid rgba(0,255,136,0.45);
+    box-shadow: 0 0 10px rgba(0,255,136,0.2);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+  #joy-zone.active #joy-knob { box-shadow: 0 0 18px rgba(0,255,136,0.5); }
+
+  #thrust-btn {
+    position: absolute; bottom: 120px; right: 20px;
+    width: 115px; height: 115px; border-radius: 50%;
+    background: rgba(0,255,136,0.06); border: 2px solid rgba(0,255,136,0.2);
+    color: rgba(0,255,136,0.55); font-family: 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    gap: 3px; pointer-events: all; touch-action: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  #thrust-btn.active {
+    background: rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.6);
+    color: #00ff88; box-shadow: 0 0 30px rgba(0,255,136,0.25);
+    text-shadow: 0 0 8px rgba(0,255,136,0.6);
+  }
+  #thrust-arr { font-size: 24px; }
+
+  .yaw-row {
+    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 14px;
+  }
+  .yaw-btn {
+    width: 54px; height: 54px; border-radius: 10px;
+    background: rgba(255,204,68,0.06); border: 1px solid rgba(255,204,68,0.18);
+    color: rgba(255,204,68,0.55); font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: all; touch-action: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  .yaw-btn.active { background: rgba(255,204,68,0.18); color: #ffcc44; border-color: rgba(255,204,68,0.45); }
 </style>
 </head>
 <body>
@@ -218,7 +276,23 @@
     [G]&nbsp;&nbsp;&nbsp; Garage<br>
     [R]&nbsp;&nbsp;&nbsp; Reset
   </div>
-  <div id="step-tag">Step 4 · The Garage</div>
+  <div id="step-tag">Step 5 · Polish</div>
+</div>
+
+<!-- ── Touch Controls ── -->
+<div id="touch-overlay">
+  <div id="joy-zone">
+    <div id="joy-bg"></div>
+    <div id="joy-knob"></div>
+  </div>
+  <div id="thrust-btn">
+    <div id="thrust-arr">▲</div>
+    <div>Thrust</div>
+  </div>
+  <div class="yaw-row">
+    <div class="yaw-btn" id="yaw-left">↺</div>
+    <div class="yaw-btn" id="yaw-right">↻</div>
+  </div>
 </div>
 
 <!-- ── Run-end debrief ── -->
@@ -446,15 +520,43 @@ const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 700);
 function onResize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
 onResize(); addEventListener('resize', onResize);
 
-scene.add(new THREE.AmbientLight(0x1a2a44, 3));
-const sun = new THREE.DirectionalLight(0xfff4e0, 3.5);
-sun.position.set(15, 30, 10); sun.castShadow = true;
+scene.add(new THREE.AmbientLight(0x1a2a55, 3.5));
+const sun = new THREE.DirectionalLight(0xfff4e0, 4.2);
+sun.position.set(20, 40, 15); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left:-40, right:40, top:40, bottom:-40, near:1, far:150 });
+Object.assign(sun.shadow.camera, { left:-60, right:60, top:60, bottom:-60, near:1, far:200 });
+sun.shadow.bias = -0.0005;
 scene.add(sun);
-scene.add(new THREE.HemisphereLight(0x0022aa, 0x0a1a08, 1.4));
+scene.add(new THREE.HemisphereLight(0x1133cc, 0x0a1a08, 1.8));
+// Soft fill from opposite side to reduce harsh shadows
+const fill = new THREE.DirectionalLight(0x3355aa, 0.8);
+fill.position.set(-10, 10, -5); scene.add(fill);
 
-const rotorLights = [0,1,2,3].map(() => { const l = new THREE.PointLight(0x00ffaa, 0.5, 3.5); scene.add(l); return l; });
+const rotorLights = [0,1,2,3].map(() => { const l = new THREE.PointLight(0x00ffaa, 0.7, 5); scene.add(l); return l; });
+
+// ─── THRUST PARTICLES ─────────────────────────────────────────────────────
+const PTCL_COUNT = 480;
+const ptclPos = new Float32Array(PTCL_COUNT * 3);
+const ptclGeo = new THREE.BufferGeometry();
+ptclGeo.setAttribute('position', new THREE.BufferAttribute(ptclPos, 3));
+const ptclMat = new THREE.PointsMaterial({
+  color: 0x66ffcc, size: 0.28, sizeAttenuation: true,
+  transparent: true, opacity: 0.7,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+});
+const ptclCloud = new THREE.Points(ptclGeo, ptclMat);
+scene.add(ptclCloud);
+const ptcls = Array.from({ length: PTCL_COUNT }, () =>
+  ({ alive:false, x:0, y:0, z:0, vx:0, vy:0, vz:0, life:0, maxLife:1 }));
+let ptclHead = 0;
+function spawnPtcl(wx, wy, wz) {
+  const p = ptcls[ptclHead++ % PTCL_COUNT];
+  p.alive = true;
+  p.x = wx+(Math.random()-0.5)*0.35; p.y = wy; p.z = wz+(Math.random()-0.5)*0.35;
+  p.vx = (Math.random()-0.5)*1.6; p.vy = -(1.8+Math.random()*2.2); p.vz = (Math.random()-0.5)*1.6;
+  p.maxLife = 0.22+Math.random()*0.3; p.life = p.maxLife;
+}
+const _ptclWP = new THREE.Vector3();
 
 // Ground
 const gndMesh = new THREE.Mesh(
@@ -625,6 +727,62 @@ const K={};
 const PREVENT=new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 addEventListener('keydown',e=>{ K[e.code]=true; if(PREVENT.has(e.code)) e.preventDefault(); });
 addEventListener('keyup',  e=>{ K[e.code]=false; });
+
+// ─── TOUCH CONTROLS ───────────────────────────────────────────────────────
+(function setupTouch() {
+  const joyZone  = document.getElementById('joy-zone');
+  const joyKnob  = document.getElementById('joy-knob');
+  const JOY_R = 50;
+  let joyId = null, joyCX = 0, joyCY = 0;
+
+  joyZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joyId = t.identifier;
+    const r = joyZone.getBoundingClientRect();
+    joyCX = r.left + r.width / 2; joyCY = r.top + r.height / 2;
+    joyZone.classList.add('active');
+  }, { passive: false });
+
+  document.addEventListener('touchmove', e => {
+    if (joyId === null) return;
+    for (const t of e.changedTouches) {
+      if (t.identifier !== joyId) continue;
+      e.preventDefault();
+      const dx = t.clientX - joyCX, dy = t.clientY - joyCY;
+      const dist = Math.hypot(dx, dy);
+      const s = dist > JOY_R ? JOY_R / dist : 1;
+      const kx = dx * s, ky = dy * s;
+      joyKnob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+      K['KeyA'] = kx < -12; K['KeyD'] = kx > 12;
+      K['KeyW'] = ky < -12; K['KeyS'] = ky > 12;
+    }
+  }, { passive: false });
+
+  function joyRelease(e) {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
+        joyId = null;
+        joyKnob.style.transform = 'translate(-50%,-50%)';
+        K['KeyA'] = K['KeyD'] = K['KeyW'] = K['KeyS'] = false;
+        joyZone.classList.remove('active');
+      }
+    }
+  }
+  document.addEventListener('touchend',    joyRelease);
+  document.addEventListener('touchcancel', joyRelease);
+
+  const thrustBtn = document.getElementById('thrust-btn');
+  thrustBtn.addEventListener('touchstart', e => { e.preventDefault(); K['Space']=true;  thrustBtn.classList.add('active'); },    { passive:false });
+  thrustBtn.addEventListener('touchend',   e => { e.preventDefault(); K['Space']=false; thrustBtn.classList.remove('active'); }, { passive:false });
+  thrustBtn.addEventListener('touchcancel',() => { K['Space']=false; thrustBtn.classList.remove('active'); });
+
+  const yawL = document.getElementById('yaw-left'), yawR = document.getElementById('yaw-right');
+  yawL.addEventListener('touchstart', e=>{ e.preventDefault(); K['KeyQ']=true;  yawL.classList.add('active'); },    { passive:false });
+  yawL.addEventListener('touchend',   e=>{ e.preventDefault(); K['KeyQ']=false; yawL.classList.remove('active'); }, { passive:false });
+  yawR.addEventListener('touchstart', e=>{ e.preventDefault(); K['KeyE']=true;  yawR.classList.add('active'); },    { passive:false });
+  yawR.addEventListener('touchend',   e=>{ e.preventDefault(); K['KeyE']=false; yawR.classList.remove('active'); }, { passive:false });
+})();
 
 // ─── CARGO STATUS ─────────────────────────────────────────────────────────
 function getCargoStatus() {
@@ -868,25 +1026,31 @@ function syncMeshes() {
   droneGroup.position.copy(droneBody.position);
   droneGroup.quaternion.copy(droneBody.quaternion);
   cargoMeshes.forEach((m,i)=>{ m.position.copy(cargoBodies[i].position); m.quaternion.copy(cargoBodies[i].quaternion); });
-  const spin=K['Space']&&battery>0?0.38:0.07;
-  rotorDiscs.forEach((r,i)=>{ r.rotation.y+=(i%2?1:-1)*spin; });
-  ARM_DIRS.forEach((dir,i)=>{
+  const thrusting = K['Space'] && battery > 0;
+  const spin = thrusting ? 0.42 : 0.07;
+  rotorDiscs.forEach((r,i) => { r.rotation.y += (i%2?1:-1)*spin; });
+  const rotorFlicker = thrusting ? 2.5 + Math.sin(performance.now()*0.04)*0.4 : 0.35;
+  ARM_DIRS.forEach((dir,i) => {
     _rotorWP[i].copy(dir).setY(0.15).applyQuaternion(droneGroup.quaternion).add(droneGroup.position);
     rotorLights[i].position.copy(_rotorWP[i]);
-    rotorLights[i].intensity=(K['Space']&&battery>0)?2.2:0.4;
+    rotorLights[i].intensity = rotorFlicker;
   });
 }
 
 // ─── CAMERA ───────────────────────────────────────────────────────────────
 let camYaw=0;
+const _camVelLead = new THREE.Vector3();
 function updateCamera() {
   const q=droneBody.quaternion;
   const sY=2*(q.w*q.y+q.z*q.x), cY=1-2*(q.x*q.x+q.y*q.y);
-  camYaw+=(Math.atan2(sY,cY)-camYaw)*0.04;
-  const offset=new THREE.Vector3(0,4.5,9).applyEuler(new THREE.Euler(0,camYaw,0));
+  camYaw+=(Math.atan2(sY,cY)-camYaw)*0.032;
+  const offset=new THREE.Vector3(0,5,10).applyEuler(new THREE.Euler(0,camYaw,0));
   const dPos=new THREE.Vector3(droneBody.position.x,droneBody.position.y,droneBody.position.z);
-  camSmooth.lerp(dPos.clone().add(offset),0.06);
-  camLookAt.lerp(dPos.clone().setY(dPos.y+0.3),0.10);
+  // Velocity look-ahead: camera leads slightly in direction of travel
+  const vel=droneBody.velocity;
+  _camVelLead.set(vel.x*0.1, vel.y*0.04, vel.z*0.1);
+  camSmooth.lerp(dPos.clone().add(offset), 0.05);
+  camLookAt.lerp(dPos.clone().setY(dPos.y+0.6).add(_camVelLead), 0.09);
   camera.position.copy(camSmooth); camera.lookAt(camLookAt);
 }
 
@@ -936,6 +1100,35 @@ function drawHorizon(roll,pitch) {
   tiltCtx.fillStyle='#fff'; tiltCtx.beginPath(); tiltCtx.arc(45,45,2,0,Math.PI*2); tiltCtx.fill();
 }
 
+// ─── PARTICLE UPDATE ─────────────────────────────────────────────────────
+function updateParticles(dt) {
+  const thrusting = K['Space'] && battery > 0 && !runEnded && !paused;
+  if (thrusting) {
+    ARM_DIRS.forEach(dir => {
+      _ptclWP.set(dir.x, 0.06, dir.z)
+        .applyQuaternion(droneGroup.quaternion)
+        .add(droneGroup.position);
+      for (let k = 0; k < 3; k++) spawnPtcl(_ptclWP.x, _ptclWP.y, _ptclWP.z);
+    });
+  }
+  let live = 0;
+  for (let i = 0; i < PTCL_COUNT; i++) {
+    const p = ptcls[i];
+    if (!p.alive) continue;
+    p.life -= dt;
+    if (p.life <= 0) { p.alive = false; continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+    p.vy -= 5 * dt;
+    ptclPos[live*3]   = p.x;
+    ptclPos[live*3+1] = p.y;
+    ptclPos[live*3+2] = p.z;
+    live++;
+  }
+  for (let i = live; i < PTCL_COUNT; i++) ptclPos[i*3+1] = -10000;
+  ptclGeo.attributes.position.needsUpdate = true;
+  ptclMat.opacity = thrusting ? 0.72 : Math.max(0, ptclMat.opacity - dt * 3);
+}
+
 // ─── MAIN LOOP ────────────────────────────────────────────────────────────
 const FIXED_DT=1/60;
 let accumulator=0, lastTime=performance.now();
@@ -948,7 +1141,7 @@ function loop(now) {
     accumulator-=FIXED_DT;
     if (!paused) { applyFlightForces(); world.step(FIXED_DT); checkGameState(); }
   }
-  syncMeshes(); updateCamera(); updateHUD();
+  syncMeshes(); updateParticles(dt); updateCamera(); updateHUD();
   renderer.render(scene,camera);
 }
 

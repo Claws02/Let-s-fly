@@ -185,6 +185,25 @@
   @keyframes panelIn { from{transform:translateY(22px) scale(0.96);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
   @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.15} }
 
+  /* ─── CHECKPOINT FLASH ──────────────────────────────────────────────────── */
+  #cp-flash {
+    display:none; position:fixed; left:50%; top:28%;
+    transform:translate(-50%,-50%);
+    font-family:'Courier New',monospace; font-size:21px; letter-spacing:3px;
+    color:#00ff88; text-shadow:0 0 22px rgba(0,255,136,0.95);
+    pointer-events:none; z-index:90; white-space:nowrap; text-align:center;
+  }
+  @keyframes cpFade {
+    0%{opacity:0;transform:translate(-50%,-50%) translateY(12px)}
+    12%{opacity:1;transform:translate(-50%,-50%) translateY(0)}
+    70%{opacity:1} 100%{opacity:0}
+  }
+  #cp-flash.show { display:block; animation:cpFade 2.1s ease-out forwards; }
+
+  /* ─── CARGO INSTABILITY WARNING ─────────────────────────────────────────── */
+  @keyframes cargoWarn { 0%,100%{color:#ff4400;text-shadow:0 0 8px rgba(255,68,0,0.9)} 50%{color:#ff8800} }
+  .cargo-warn { animation:cargoWarn 0.32s ease-in-out infinite !important; }
+
   /* ═══════════════════════════════════════
      TOUCH CONTROLS
   ═══════════════════════════════════════ */
@@ -267,6 +286,7 @@
     <div id="batt-pct">100%</div>
   </div>
   <div id="batt-dead">⚠ BATTERY DEAD — GLIDING</div>
+  <div id="cp-flash"></div>
   <canvas id="tilt-canvas" width="90" height="90"></canvas>
   <div id="controls-hint">
     [SPACE] Thrust Up<br>
@@ -307,6 +327,8 @@
     </div>
     <div id="end-stats">
       <span id="stat-dist">DIST: 0 m</span>
+      <span>·</span>
+      <span id="stat-best">BEST: 0 m</span>
       <span>·</span>
       <span id="stat-cargo">CARGO: 0 / 3</span>
     </div>
@@ -373,6 +395,7 @@ const YAW_POWER    = 3.5;
 const LIN_DAMP     = 0.28;
 const ANG_DAMP     = 0.45;
 const FINISH_Z     = -500;
+const CHECKPOINT_ZS = [-167, -334];
 
 // Mutable — driven by upgrades
 let THRUST_POWER   = 38;
@@ -380,7 +403,7 @@ let AUTO_STABILIZE = 1.0;
 let MAX_BATTERY    = 100;
 let CRASH_VEL_THR  = 12;
 
-const BATTERY_DRAIN = 7;   // units/sec while thrusting
+const BATTERY_DRAIN = 5.5; // units/sec while thrusting
 
 // Drone geometry half-extents
 const DX = 1.0, DY = 0.11, DZ = 1.0;
@@ -401,8 +424,10 @@ const PAY = {
 const LS_COINS    = 'gyroDrop_coins';
 const LS_TIER     = 'gyroDrop_tier';
 const LS_UPGRADES = 'gyroDrop_upgrades';
+const LS_BEST     = 'gyroDrop_best';
 
 let walletCache    = parseInt(localStorage.getItem(LS_COINS) || '0');
+let bestDist       = parseInt(localStorage.getItem(LS_BEST)  || '0');
 let upgradeLevels  = JSON.parse(localStorage.getItem(LS_UPGRADES) || '{"battery":0,"thrust":0,"gyro":0,"chassis":0}');
 
 function addToWallet(n) {
@@ -476,6 +501,8 @@ let battery   = MAX_BATTERY;
 let gameState = 'flying';
 let runEnded  = false;
 let paused    = false;
+let cpReached = [false, false];
+let camShakeAmt = 0;
 
 // ─── SEEDED PRNG ──────────────────────────────────────────────────────────
 function makePRNG(seed) {
@@ -665,6 +692,35 @@ function buildFinishLine() {
 
 generateCanyon();
 
+// ─── CHECKPOINT GATES ─────────────────────────────────────────────────────
+function buildCheckpointGate(z) {
+  const fg = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({
+    color:0x00ff88, emissive:0x00cc66, emissiveIntensity:0.75,
+    roughness:0.3, metalness:0.65, transparent:true, opacity:0.88,
+  });
+  [-10, 10].forEach(x => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 18, 8), mat);
+    pole.position.set(x, 9, 0); fg.add(pole);
+    const light = new THREE.PointLight(0x00ff88, 2.5, 16); light.position.set(x, 1.5, 0); fg.add(light);
+  });
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(20.5, 0.45, 0.45), mat);
+  bar.position.set(0, 18, 0); fg.add(bar);
+  const topLight = new THREE.PointLight(0x00ff88, 1.8, 11); topLight.position.set(0, 18, 0); fg.add(topLight);
+  fg.position.set(0, 0, z);
+  scene.add(fg);
+}
+CHECKPOINT_ZS.forEach(z => buildCheckpointGate(z));
+
+function triggerCheckpoint(idx) {
+  const coins = 60;
+  addToWallet(coins);
+  battery = Math.min(MAX_BATTERY, battery + MAX_BATTERY * 0.38);
+  const el = document.getElementById('cp-flash');
+  el.textContent = `✓ CHECKPOINT ${idx + 1}  ·  +${coins} ⬡  ·  ⚡ +38%`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
 // ─── DRONE BODY ───────────────────────────────────────────────────────────
 const droneBody = new CANNON.Body({ mass:DRONE_MASS, material:matDrone });
 droneBody.addShape(new CANNON.Box(new CANNON.Vec3(DX,DY,DZ)));
@@ -797,7 +853,9 @@ function countCargo(s){ return s.filter(Boolean).length; }
 // ─── CRASH DETECTION ──────────────────────────────────────────────────────
 droneBody.addEventListener('collide', event=>{
   if (runEnded) return;
-  if (Math.abs(event.contact.getImpactVelocityAlongNormal()) > CRASH_VEL_THR) endRun('crashed');
+  const vel = Math.abs(event.contact.getImpactVelocityAlongNormal());
+  if (vel > CRASH_VEL_THR) { endRun('crashed'); return; }
+  if (vel > 3.0) camShakeAmt = Math.min(0.55, vel * 0.055);
 });
 
 // ─── RESET ────────────────────────────────────────────────────────────────
@@ -807,8 +865,10 @@ const camLookAt=new THREE.Vector3(0,START_Y,0);
 
 function resetDrone() {
   battery=MAX_BATTERY; gameState='flying'; runEnded=false; paused=false;
+  cpReached=[false,false]; camShakeAmt=0;
   document.getElementById('end-overlay').style.display='none';
   document.getElementById('batt-dead').style.display='none';
+  document.getElementById('cp-flash').classList.remove('show');
 
   droneBody.position.set(0,START_Y,0);
   droneBody.velocity.set(0,0,0); droneBody.angularVelocity.set(0,0,0);
@@ -851,11 +911,13 @@ function endRun(reason) {
   runEnded=true; gameState=reason;
   document.getElementById('batt-dead').style.display='none';
   const distM=Math.max(0,-droneBody.position.z);
+  const isNewBest = Math.floor(distM) > bestDist;
+  if (isNewBest) { bestDist=Math.floor(distM); localStorage.setItem(LS_BEST, bestDist); }
   const cargoStatus=getCargoStatus();
   const payout=calculatePayout(reason,distM,cargoStatus);
   const newWallet=addToWallet(payout.total);
   if (payout.unlockTier) localStorage.setItem(LS_TIER,'1');
-  setTimeout(()=>showEndScreen(payout,newWallet,cargoStatus), 400);
+  setTimeout(()=>showEndScreen(payout,newWallet,cargoStatus,isNewBest), 400);
 }
 
 // ─── ANIMATED END SCREEN ──────────────────────────────────────────────────
@@ -867,13 +929,16 @@ function countUp(el,target,ms,pre='',suf='') {
   requestAnimationFrame(step);
 }
 
-function showEndScreen(payout, newWallet, cargoStatus) {
+function showEndScreen(payout, newWallet, cargoStatus, isNewBest=false) {
   const panel=document.getElementById('end-panel');
   panel.style.setProperty('--run-color', payout.color);
   document.getElementById('end-tag').textContent   = payout.tag;
   document.getElementById('end-title').textContent = payout.title;
   document.getElementById('end-title').style.color = payout.color;
   document.getElementById('stat-dist').textContent  = `DIST: ${Math.floor(payout.distM)} m`;
+  const bestEl = document.getElementById('stat-best');
+  bestEl.textContent = (isNewBest ? '★ BEST: ' : 'BEST: ') + bestDist + ' m';
+  bestEl.style.color = isNewBest ? '#ffcc44' : '';
   document.getElementById('stat-cargo').textContent = `CARGO: ${payout.cargo} / 3`;
   document.getElementById('unlock-badge').style.display = payout.unlockTier ? 'block' : 'none';
 
@@ -884,20 +949,20 @@ function showEndScreen(payout, newWallet, cargoStatus) {
   requestAnimationFrame(()=>{ document.getElementById('end-tag').classList.add('vis'); document.getElementById('end-title').classList.add('vis'); });
 
   const at=(ms,fn)=>setTimeout(fn,ms);
-  at(500,  ()=>document.getElementById('end-stats').classList.add('vis'));
-  cargoStatus.forEach((alive,i)=>at(600+i*160,()=>{
+  at(300,  ()=>document.getElementById('end-stats').classList.add('vis'));
+  cargoStatus.forEach((alive,i)=>at(400+i*110,()=>{
     const box=document.getElementById(`cbox-${i}`);
     box.style.background = alive ? CARGO_COLORS_CSS[i] : 'rgba(40,40,40,0.6)';
     box.style.borderColor= alive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.07)';
     box.style.boxShadow  = alive ? `0 0 12px ${CARGO_COLORS_CSS[i]}88` : 'none';
     box.classList.add(alive ? 'alive' : 'dead');
   }));
-  at(1200,()=>{ document.getElementById('row-dist').classList.add('vis'); const el=document.getElementById('pay-dist'); if(payout.distCoins>0){el.className='val pos';countUp(el,payout.distCoins,700,'+ ');}else{el.className='val zero';el.textContent='—';} });
-  at(1850,()=>{ document.getElementById('row-cargo').classList.add('vis'); const el=document.getElementById('pay-cargo'); if(payout.cargoCoins>0){el.className='val pos';countUp(el,payout.cargoCoins,700,'+ ');}else{el.className='val zero';el.textContent='—';} });
-  at(2450,()=>{ document.getElementById('row-bonus').classList.add('vis'); const el=document.getElementById('pay-bonus'); if(payout.bonusCoins>0){el.className='val pos';countUp(el,payout.bonusCoins,600,'+ ');}else{el.className='val zero';el.textContent='—';} });
-  at(3000,()=>document.getElementById('pay-divider').classList.add('vis'));
-  at(3150,()=>{ document.getElementById('row-total').classList.add('vis'); countUp(document.getElementById('pay-total'),payout.total,900); });
-  at(3900,()=>{ document.getElementById('wallet-row').classList.add('vis'); countUp(document.getElementById('pay-wallet'),newWallet,800); });
+  at(850, ()=>{ document.getElementById('row-dist').classList.add('vis'); const el=document.getElementById('pay-dist'); if(payout.distCoins>0){el.className='val pos';countUp(el,payout.distCoins,550,'+ ');}else{el.className='val zero';el.textContent='—';} });
+  at(1300,()=>{ document.getElementById('row-cargo').classList.add('vis'); const el=document.getElementById('pay-cargo'); if(payout.cargoCoins>0){el.className='val pos';countUp(el,payout.cargoCoins,550,'+ ');}else{el.className='val zero';el.textContent='—';} });
+  at(1700,()=>{ document.getElementById('row-bonus').classList.add('vis'); const el=document.getElementById('pay-bonus'); if(payout.bonusCoins>0){el.className='val pos';countUp(el,payout.bonusCoins,500,'+ ');}else{el.className='val zero';el.textContent='—';} });
+  at(2100,()=>document.getElementById('pay-divider').classList.add('vis'));
+  at(2250,()=>{ document.getElementById('row-total').classList.add('vis'); countUp(document.getElementById('pay-total'),payout.total,700); });
+  at(2900,()=>{ document.getElementById('wallet-row').classList.add('vis'); countUp(document.getElementById('pay-wallet'),newWallet,650); });
 }
 
 // ─── GARAGE SYSTEM ────────────────────────────────────────────────────────
@@ -986,6 +1051,12 @@ addEventListener('keydown', e=>{
 // ─── GAME-STATE CHECKS ────────────────────────────────────────────────────
 function checkGameState() {
   if (runEnded) return;
+  CHECKPOINT_ZS.forEach((cz, i) => {
+    if (!cpReached[i] && droneBody.position.z <= cz) {
+      cpReached[i] = true;
+      triggerCheckpoint(i);
+    }
+  });
   if (droneBody.position.z<=FINISH_Z) { endRun('finished'); return; }
   if (gameState==='battery_dead') {
     if (droneBody.position.y<=DY+0.3 && droneBody.velocity.length()<4.0) endRun('landed_safe');
@@ -1052,6 +1123,11 @@ function updateCamera() {
   camSmooth.lerp(dPos.clone().add(offset), 0.05);
   camLookAt.lerp(dPos.clone().setY(dPos.y+0.6).add(_camVelLead), 0.09);
   camera.position.copy(camSmooth); camera.lookAt(camLookAt);
+  if (camShakeAmt > 0.004) {
+    camera.position.x += (Math.random()-0.5) * camShakeAmt * 1.8;
+    camera.position.y += (Math.random()-0.5) * camShakeAmt * 0.9;
+    camShakeAmt = Math.max(0, camShakeAmt - 0.04);
+  }
 }
 
 // ─── HUD ──────────────────────────────────────────────────────────────────
@@ -1070,7 +1146,11 @@ function updateHUD() {
   droneBody.quaternion.vmult(_upLocal,_worldUp);
   elTilt.textContent=(Math.acos(Math.max(-1,Math.min(1,_worldUp.y)))*180/Math.PI).toFixed(1);
   const status=getCargoStatus();
-  elCargo.textContent=`${countCargo(status)} / 3`;
+  const liveCargo=countCargo(status);
+  elCargo.textContent=`${liveCargo} / 3`;
+  const maxAngVel=Math.max(...cargoBodies.map(b=>b.angularVelocity.length()));
+  if (liveCargo>0 && maxAngVel>3.2) elCargo.classList.add('cargo-warn');
+  else elCargo.classList.remove('cargo-warn');
   const dist=Math.max(0,-pos.z), remain=Math.max(0,500+pos.z);
   elDist.textContent=dist.toFixed(0); elRemain.textContent=remain.toFixed(0);
   progFill.style.width=Math.min(100,dist/5)+'%';

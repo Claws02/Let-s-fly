@@ -153,6 +153,61 @@
   #controls-hint { position: absolute; bottom: 16px; left: 16px; color: rgba(255,255,255,0.3); font-size: 11px; line-height: 1.9; }
   #step-tag { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.13); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
 
+  /* ── Mode Select overlay ── */
+  #mode-select {
+    display: flex; position: fixed; inset: 0;
+    align-items: center; justify-content: center; flex-direction: column;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(14px);
+    pointer-events: all; font-family: 'Courier New', monospace;
+    color: #fff; text-align: center; z-index: 20;
+  }
+  #mode-select.hidden { display: none; }
+  #mode-title { font-size: 48px; font-weight: bold; letter-spacing: 6px; color: #00ff88; text-shadow: 0 0 32px rgba(0,255,136,0.55); margin-bottom: 6px; }
+  #mode-sub   { font-size: 12px; letter-spacing: 4px; opacity: 0.35; margin-bottom: 42px; text-transform: uppercase; }
+  .mode-cards { display: flex; gap: 20px; margin-bottom: 28px; flex-wrap: wrap; justify-content: center; }
+  .mode-card {
+    width: 200px; padding: 28px 20px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.035);
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    text-align: center;
+  }
+  .mode-card:hover { transform: translateY(-5px); }
+  .mode-card.normal:hover { border-color: rgba(0,255,136,0.5); background: rgba(0,255,136,0.06); }
+  .mode-card.daily:hover  { border-color: rgba(255,200,0,0.5);  background: rgba(255,200,0,0.07);  }
+  .mode-icon  { font-size: 38px; margin-bottom: 12px; }
+  .mode-name  { font-size: 13px; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+  .mode-desc  { font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.7; }
+  .mode-card.normal .mode-name { color: #00ff88; }
+  .mode-card.daily  .mode-name { color: #ffcc00; }
+  .mode-card.daily.done { border-color: rgba(0,255,136,0.25); }
+  #daily-best-line { font-size: 12px; color: rgba(255,200,0,0.55); margin-top: 10px; display: none; }
+  #daily-best-line span { color: #ffcc00; font-weight: bold; }
+  #daily-done-line { font-size: 11px; color: rgba(0,255,136,0.65); margin-top: 6px; letter-spacing: 1px; display: none; }
+  #daily-countdown { font-size: 10px; color: rgba(255,255,255,0.2); margin-top: 5px; letter-spacing: 1px; }
+  #mode-hint { font-size: 11px; color: rgba(255,255,255,0.18); letter-spacing: 2px; }
+
+  /* ── Daily HUD badge ── */
+  #daily-badge {
+    display: none;
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,160,0,0.14); border: 1px solid rgba(255,200,0,0.38);
+    border-radius: 20px; padding: 4px 16px;
+    color: #ffcc00; font-size: 11px; letter-spacing: 3px; font-weight: bold;
+    text-shadow: 0 0 8px rgba(255,200,0,0.5);
+    white-space: nowrap;
+  }
+
+  /* ── Daily result card on end screen ── */
+  #daily-result-card {
+    display: none; width: 100%; max-width: 440px;
+    background: rgba(255,160,0,0.07); border: 1px solid rgba(255,200,0,0.3);
+    border-radius: 8px; padding: 12px 24px; margin-bottom: 12px; text-align: center;
+  }
+  #drc-title  { font-size: 10px; letter-spacing: 3px; color: rgba(255,200,0,0.5); text-transform: uppercase; margin-bottom: 5px; }
+  #drc-bonus  { font-size: 15px; color: #ffcc00; font-weight: bold; }
+  #drc-status { font-size: 11px; color: rgba(0,255,136,0.7); margin-top: 4px; letter-spacing: 1px; }
+
   @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.15} }
   @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
@@ -290,6 +345,28 @@
 <body>
 <canvas id="c"></canvas>
 
+<!-- Mode Select overlay -->
+<div id="mode-select">
+  <div id="mode-title">GYRO DROP</div>
+  <div id="mode-sub">The Wobbly Hauler</div>
+  <div class="mode-cards">
+    <div class="mode-card normal" id="card-normal">
+      <div class="mode-icon">🚁</div>
+      <div class="mode-name">Normal Flight</div>
+      <div class="mode-desc">Standard run — fresh canyon every attempt. Grind coins at your own pace.</div>
+    </div>
+    <div class="mode-card daily" id="card-daily">
+      <div class="mode-icon">📅</div>
+      <div class="mode-name">Daily Challenge</div>
+      <div class="mode-desc">Today's fixed canyon.<br><strong style="color:#ffcc00">+50% bonus coins</strong> on your payout.</div>
+      <div id="daily-best-line">Best today: <span id="daily-best-val">0</span> ⬡</div>
+      <div id="daily-done-line">✓ Completed today</div>
+      <div id="daily-countdown"></div>
+    </div>
+  </div>
+  <div id="mode-hint">Click a card or press [SPACE] / [D] to choose</div>
+</div>
+
 <div id="hud">
   <div class="panel">
     ALT:&nbsp;&nbsp; <span id="v-alt">0.00</span> m<br>
@@ -318,6 +395,7 @@
     [R]&nbsp;&nbsp;&nbsp; Reset &nbsp; [G] Garage
   </div>
   <div id="step-tag">Step 5 · Polish</div>
+  <div id="daily-badge">◈ DAILY CHALLENGE</div>
 </div>
 
 <!-- Touch controls -->
@@ -363,6 +441,12 @@
     </div>
   </div>
   <div id="bank-line">TOTAL BANK: <span id="pv-bank">0</span> coins</div>
+
+  <div id="daily-result-card">
+    <div id="drc-title">◈ Daily Challenge Bonus</div>
+    <div id="drc-bonus">+0 ⬡ &nbsp;(×1.5)</div>
+    <div id="drc-status"></div>
+  </div>
 
   <div id="new-record-badge">🏆 NEW PERSONAL BEST!</div>
 
@@ -454,6 +538,54 @@ function saveAll() {
   UPGRADES.forEach(u => saveInt(`gyrodrop_upg_${u.id}`, upgradeLevels[u.id]));
 }
 
+// ─── DAILY CHALLENGE HELPERS ──────────────────────────────────────────────
+const DAILY_KEY = 'gyrodrop_daily';
+
+function getDailyDateStr() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function getDailySeed() {
+  // Deterministic per-day seed: digits of YYYYMMDD
+  return parseInt(getDailyDateStr().replace(/-/g, ''), 10);
+}
+
+function getDailyRecord() {
+  try { return JSON.parse(localStorage.getItem(DAILY_KEY) || 'null'); }
+  catch { return null; }
+}
+
+// Returns true if this is a new daily best (or first completion).
+function saveDailyRecord(coinsEarned) {
+  const today  = getDailyDateStr();
+  const prev   = getDailyRecord();
+  const isBest = !prev || prev.date !== today || coinsEarned > prev.coins;
+  if (isBest) localStorage.setItem(DAILY_KEY, JSON.stringify({ date: today, coins: coinsEarned }));
+  return isBest;
+}
+
+function isDailyCompleted() {
+  const d = getDailyRecord();
+  return d && d.date === getDailyDateStr();
+}
+
+function getDailyBestCoins() {
+  const d = getDailyRecord();
+  return (d && d.date === getDailyDateStr()) ? d.coins : 0;
+}
+
+// Seconds until next midnight UTC.
+function secondsToMidnightUTC() {
+  const now = new Date(), midnight = new Date(now);
+  midnight.setUTCHours(24, 0, 0, 0);
+  return Math.floor((midnight - now) / 1000);
+}
+
+function formatCountdown(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  return `Resets in ${h}h ${String(m).padStart(2,'0')}m ${String(ss).padStart(2,'0')}s`;
+}
+
 function getUpgradeValue(id) {
   const u = UPGRADES.find(x => x.id === id);
   return u.values[upgradeLevels[id]];
@@ -487,9 +619,11 @@ const SALVAGE_DIST_MULT     = 1.5;
 const PITY_COINS            = 10;
 
 // ─── GAME STATE ───────────────────────────────────────────────────────────
-let battery   = MAX_BATTERY;
-let gameState = 'flying';
-let runEnded  = false;
+let battery          = MAX_BATTERY;
+let gameState        = 'flying';
+let runEnded         = false;
+let isDailyChallenge = false;
+let onModeSelect     = true;
 
 // ─── PRNG ─────────────────────────────────────────────────────────────────
 function makePRNG(seed) {
@@ -583,6 +717,16 @@ grid.position.z=-300; scene.add(grid);
 
 // ─── CANYON ───────────────────────────────────────────────────────────────
 const wallBodies=[],wallMeshes=[];
+let finishGroup = null;
+
+function clearCanyon() {
+  wallBodies.forEach(b => world.removeBody(b));
+  wallMeshes.forEach(m => { scene.remove(m); if(m.geometry) m.geometry.dispose(); });
+  wallBodies.length = 0;
+  wallMeshes.length = 0;
+  if (finishGroup) { scene.remove(finishGroup); finishGroup = null; }
+}
+
 const ROCK_MATS=[
   new THREE.MeshStandardMaterial({color:0x2c1e10,roughness:0.94,metalness:0.02}),
   new THREE.MeshStandardMaterial({color:0x38251a,roughness:0.92,metalness:0.02}),
@@ -593,8 +737,8 @@ const PILLAR_MAT=new THREE.MeshStandardMaterial({color:0x181008,roughness:0.91,m
 function addWallBody(x,y,z,hw,hh,hd){const b=new CANNON.Body({mass:0,material:matWall});b.addShape(new CANNON.Box(new CANNON.Vec3(hw,hh,hd)));b.position.set(x,y,z);world.addBody(b);wallBodies.push(b);}
 function addWallMesh(x,y,z,w,h,d,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);wallMeshes.push(m);}
 
-function generateCanyon(){
-  const rng=makePRNG(4242);
+function generateCanyon(seed=4242){
+  const rng=makePRNG(seed);
   const SEG_COUNT=36,SEG_LEN=15,WALL_W=8,WALL_OVER=2,CANYON_START_Z=-22;
   const pathX=[0];
   for(let i=1;i<SEG_COUNT;i++) pathX.push(Math.max(-14,Math.min(14,pathX[i-1]+(rng()-0.5)*5)));
@@ -651,6 +795,7 @@ function buildFinishLine(){
   }
   [-11,11].forEach(x=>{const b=new THREE.PointLight(0xffcc00,2.5,18);b.position.set(x,1.5,0);fg.add(b);});
   fg.position.set(0,0,FINISH_Z); scene.add(fg);
+  finishGroup = fg;
 }
 
 generateCanyon();
@@ -786,6 +931,11 @@ const PREVENT=new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 addEventListener('keydown',e=>{
   K[e.code]=true;
   if(PREVENT.has(e.code)) e.preventDefault();
+  if(onModeSelect){
+    if(e.code==='Space'||e.code==='KeyR') startNormal();
+    if(e.code==='KeyD') startDaily();
+    return;
+  }
   if(e.code==='KeyG'&&runEnded) openGarage();
   if(e.code==='KeyR') doReset();
 });
@@ -892,10 +1042,14 @@ function applyUpgradesToPhysics(){
 
 function resetDrone(){
   applyUpgradesToPhysics();
-  battery=MAX_BATTERY; gameState='flying'; runEnded=false;
+  battery=MAX_BATTERY; gameState='flying'; runEnded=false; onModeSelect=false;
   document.getElementById('end-overlay').style.display='none';
   document.getElementById('garage-overlay').style.display='none';
   document.getElementById('batt-dead').style.display='none';
+  document.getElementById('mode-select').classList.add('hidden');
+  document.getElementById('daily-badge').style.display = isDailyChallenge ? 'block' : 'none';
+  clearCanyon();
+  generateCanyon(isDailyChallenge ? getDailySeed() : 4242);
 
   droneBody.position.set(0,START_Y,0);
   droneBody.velocity.set(0,0,0); droneBody.angularVelocity.set(0,0,0);
@@ -914,8 +1068,45 @@ function resetDrone(){
 
 function doReset(){
   if(document.getElementById('garage-overlay').style.display==='flex') return;
+  openModeSelect();
+}
+
+// ─── MODE SELECT ──────────────────────────────────────────────────────────
+function openModeSelect(){
+  document.getElementById('end-overlay').style.display='none';
+  document.getElementById('garage-overlay').style.display='none';
+  document.getElementById('mode-select').classList.remove('hidden');
+  onModeSelect=true;
+
+  // Refresh daily card state
+  const completed=isDailyCompleted(), best=getDailyBestCoins();
+  document.getElementById('daily-best-line').style.display = best>0 ? 'block' : 'none';
+  document.getElementById('daily-best-val').textContent   = best.toLocaleString();
+  document.getElementById('daily-done-line').style.display = completed ? 'block' : 'none';
+  document.getElementById('card-daily').classList.toggle('done', completed);
+  document.getElementById('daily-countdown').textContent   = completed ? formatCountdown(secondsToMidnightUTC()) : '';
+}
+
+function startNormal(){
+  isDailyChallenge=false;
   resetDrone();
 }
+
+function startDaily(){
+  isDailyChallenge=true;
+  resetDrone();
+}
+
+// Wire up mode select cards
+document.getElementById('card-normal').addEventListener('click', startNormal);
+document.getElementById('card-daily').addEventListener('click',  startDaily);
+
+// Tick the daily countdown every second while mode select is visible
+setInterval(()=>{
+  if(!onModeSelect) return;
+  if(isDailyCompleted())
+    document.getElementById('daily-countdown').textContent=formatCountdown(secondsToMidnightUTC());
+}, 1000);
 
 // ─── CARGO COUNT ──────────────────────────────────────────────────────────
 function countCargo(){
@@ -930,14 +1121,24 @@ function countCargo(){
 // ─── PAYOUT ───────────────────────────────────────────────────────────────
 function calcPayout(reason,distM,cargo){
   const dist=Number(distM);
-  if(reason==='crashed') return {scenario:'VIOLENT CRASH',distCoins:0,cargoCoins:0,finishCoins:0,multiplier:1.0,earned:PITY_COINS};
-  if(reason==='finished'){
-    if(cargo===0) return {scenario:'DELIVERY FEE',distCoins:0,cargoCoins:0,finishCoins:75,multiplier:1.0,earned:75};
-    const distCoins=Math.floor(dist*COINS_PER_METER),cargoCoins=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
-    return {scenario:cargo===3?'PERFECT DELIVERY':'PARTIAL DELIVERY',distCoins,cargoCoins,finishCoins:FINISH_BONUS,multiplier:mult,earned:Math.floor((distCoins+FINISH_BONUS+cargoCoins)*mult)};
+  const DAILY_MULT = 1.5;
+  let base;
+  if(reason==='crashed')
+    base={scenario:'VIOLENT CRASH',distCoins:0,cargoCoins:0,finishCoins:0,multiplier:1.0,earned:PITY_COINS};
+  else if(reason==='finished'){
+    if(cargo===0) base={scenario:'DELIVERY FEE',distCoins:0,cargoCoins:0,finishCoins:75,multiplier:1.0,earned:75};
+    else { const dc=Math.floor(dist*COINS_PER_METER),cc=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
+      base={scenario:cargo===3?'PERFECT DELIVERY':'PARTIAL DELIVERY',distCoins:dc,cargoCoins:cc,finishCoins:FINISH_BONUS,multiplier:mult,earned:Math.floor((dc+FINISH_BONUS+cc)*mult)}; }
+  } else {
+    const dc=Math.floor(dist*COINS_PER_METER*SALVAGE_DIST_MULT),cc=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
+    base={scenario:cargo>0?'SALVAGE RUN':'FORCED LANDING',distCoins:dc,cargoCoins:cc,finishCoins:0,multiplier:mult,earned:Math.max(PITY_COINS,Math.floor((dc+cc)*mult))};
   }
-  const distCoins=Math.floor(dist*COINS_PER_METER*SALVAGE_DIST_MULT),cargoCoins=cargo*CARGO_BONUS_PER_BOX,mult=cargo===3?FULL_CARGO_MULTIPLIER:1.0;
-  return {scenario:cargo>0?'SALVAGE RUN':'FORCED LANDING',distCoins,cargoCoins,finishCoins:0,multiplier:mult,earned:Math.max(PITY_COINS,Math.floor((distCoins+cargoCoins)*mult))};
+  if(isDailyChallenge){
+    const bonus=Math.floor(base.earned*(DAILY_MULT-1));
+    base.dailyBonus=bonus;
+    base.earned=base.earned+bonus;
+  } else { base.dailyBonus=0; }
+  return base;
 }
 
 function endRun(reason){
@@ -964,8 +1165,19 @@ function endRun(reason){
   document.getElementById('pr-mult').style.display  =payout.multiplier!==1.0?'flex':'none';
   document.getElementById('pr-finish').style.display=payout.finishCoins>0?'flex':'none';
 
+  // Daily challenge result card
+  const drcCard = document.getElementById('daily-result-card');
+  if (isDailyChallenge) {
+    const dailyIsNewBest = saveDailyRecord(payout.earned);
+    document.getElementById('drc-bonus').textContent = '+' + payout.dailyBonus + ' ⬡  (×1.5)';
+    document.getElementById('drc-status').textContent = dailyIsNewBest ? '🏆 New daily best!' : 'Previous best: ' + getDailyBestCoins() + ' ⬡';
+    drcCard.style.display = 'block';
+  } else {
+    drcCard.style.display = 'none';
+  }
+
   // Record and render leaderboard
-  const entry = { scenario: payout.scenario, dist: Number(distM), cargo, earned: payout.earned, ts: Date.now() };
+  const entry = { scenario: payout.scenario + (isDailyChallenge ? ' ◈' : ''), dist: Number(distM), cargo, earned: payout.earned, ts: Date.now() };
   const { board, rank, isNewBest } = recordRun(entry);
 
   const badge = document.getElementById('new-record-badge');
@@ -1221,7 +1433,7 @@ function loop(now){
 }
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────
-resetDrone();
+openModeSelect();
 requestAnimationFrame(loop);
 </script>
 </body>

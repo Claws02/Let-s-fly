@@ -96,6 +96,48 @@
   .btn-garage { background: #ffcc00; color: #000; }
   #end-hint   { font-size: 11px; opacity: 0.3; margin-top: 14px; animation: blink 1.4s ease-in-out infinite; }
 
+  /* ── New Record flash ── */
+  #new-record-badge {
+    display: none;
+    font-size: 13px; font-weight: bold; letter-spacing: 3px;
+    color: #ffcc00; text-transform: uppercase;
+    text-shadow: 0 0 14px #ffcc00;
+    margin-bottom: 14px;
+    animation: blink 0.9s ease-in-out infinite;
+  }
+
+  /* ── Leaderboard ── */
+  #leaderboard {
+    width: 100%; max-width: 440px;
+    margin-bottom: 18px;
+  }
+  #lb-title {
+    font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .lb-row {
+    display: flex; align-items: center; gap: 0;
+    font-size: 12px; padding: 6px 12px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 4px;
+    transition: border-color 0.2s;
+  }
+  .lb-row.current-run {
+    border-color: rgba(255,200,0,0.35);
+    background: rgba(255,200,0,0.06);
+  }
+  .lb-rank  { width: 24px; color: rgba(255,255,255,0.25); font-size: 11px; flex-shrink: 0; }
+  .lb-rank.gold   { color: #ffcc00; }
+  .lb-rank.silver { color: #aaaaaa; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-scenario { flex: 1; color: rgba(255,255,255,0.5); font-size: 11px; text-align: left; }
+  .lb-dist  { width: 60px; color: rgba(255,255,255,0.4); font-size: 11px; text-align: right; }
+  .lb-cargo { width: 36px; color: rgba(0,255,136,0.7); font-size: 11px; text-align: right; }
+  .lb-coins { width: 70px; color: #ffcc00; font-weight: bold; text-align: right; }
+  #lb-empty { font-size: 12px; color: rgba(255,255,255,0.2); padding: 8px 0; }
+
   /* ── Progress bar ── */
   #progress-wrap {
     position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
@@ -321,6 +363,14 @@
     </div>
   </div>
   <div id="bank-line">TOTAL BANK: <span id="pv-bank">0</span> coins</div>
+
+  <div id="new-record-badge">🏆 NEW PERSONAL BEST!</div>
+
+  <div id="leaderboard">
+    <div id="lb-title">— Best Runs —</div>
+    <div id="lb-rows"><div id="lb-empty">No runs yet — fly!</div></div>
+  </div>
+
   <div class="end-btns">
     <button class="end-btn btn-garage" id="end-garage-btn">⚙ GARAGE</button>
     <button class="end-btn btn-fly"    id="end-fly-btn">▶ FLY AGAIN</button>
@@ -369,6 +419,35 @@ function saveInt(key, val) { localStorage.setItem(key, String(val)); }
 let totalCoins = loadInt('gyrodrop_coins', 0);
 const upgradeLevels = {};
 UPGRADES.forEach(u => { upgradeLevels[u.id] = loadInt(`gyrodrop_upg_${u.id}`, 0); });
+
+// ─── LEADERBOARD PERSISTENCE ──────────────────────────────────────────────
+const LB_KEY = 'gyrodrop_runs';
+const LB_MAX = 5;
+
+function loadLeaderboard() {
+  try { return JSON.parse(localStorage.getItem(LB_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveLeaderboard(lb) {
+  localStorage.setItem(LB_KEY, JSON.stringify(lb));
+}
+
+// Adds a run, keeps top LB_MAX sorted by coins earned.
+// Returns {board, rank, isNewBest} where rank is 1-based position of this run (null if not in top LB_MAX).
+function recordRun(entry) {
+  const board = loadLeaderboard();
+  board.push(entry);
+  board.sort((a, b) => b.earned - a.earned);
+  const rank = board.findIndex(r => r === entry) + 1; // 1-based, pre-trim
+  const trimmed = board.slice(0, LB_MAX);
+  const inBoard = trimmed.includes(entry);
+  const isNewBest = inBoard && rank === 1 && board.length > 0;
+  saveLeaderboard(trimmed.map(r => r === entry
+    ? { scenario: entry.scenario, dist: entry.dist, cargo: entry.cargo, earned: entry.earned, ts: entry.ts }
+    : r));
+  return { board: trimmed, rank: inBoard ? rank : null, isNewBest };
+}
 
 function saveAll() {
   saveInt('gyrodrop_coins', totalCoins);
@@ -884,7 +963,42 @@ function endRun(reason){
   document.getElementById('pv-bank').textContent       =totalCoins.toLocaleString();
   document.getElementById('pr-mult').style.display  =payout.multiplier!==1.0?'flex':'none';
   document.getElementById('pr-finish').style.display=payout.finishCoins>0?'flex':'none';
+
+  // Record and render leaderboard
+  const entry = { scenario: payout.scenario, dist: Number(distM), cargo, earned: payout.earned, ts: Date.now() };
+  const { board, rank, isNewBest } = recordRun(entry);
+
+  const badge = document.getElementById('new-record-badge');
+  if (isNewBest && board.length > 1) {
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  renderLeaderboard(board, entry);
   document.getElementById('end-overlay').style.display='flex';
+}
+
+// ─── LEADERBOARD RENDER ───────────────────────────────────────────────────
+function renderLeaderboard(board, currentEntry) {
+  const container = document.getElementById('lb-rows');
+  if (!board || board.length === 0) {
+    container.innerHTML = '<div id="lb-empty">No runs yet — fly!</div>';
+    return;
+  }
+  const rankSymbols = ['🥇','🥈','🥉','4','5'];
+  const rankClasses = ['gold','silver','bronze','',''];
+  container.innerHTML = board.map((r, i) => {
+    const isCurrent = currentEntry && r.ts === currentEntry.ts && r.earned === currentEntry.earned;
+    return `
+      <div class="lb-row ${isCurrent ? 'current-run' : ''}">
+        <span class="lb-rank ${rankClasses[i]}">${rankSymbols[i]}</span>
+        <span class="lb-scenario">${r.scenario}</span>
+        <span class="lb-dist">${r.dist}m</span>
+        <span class="lb-cargo">📦${r.cargo}/3</span>
+        <span class="lb-coins">${r.earned} ⬡</span>
+      </div>`;
+  }).join('');
 }
 
 // ─── GARAGE ───────────────────────────────────────────────────────────────
